@@ -1,0 +1,49 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="login-container">
+    <img src="{{ url_for('static', filename='icon.png') }}" alt="Logo" class="logo">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/login.css') }}">
+    <h2>Bem-vindo de volta!</h2>
+
+    {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+            {% for category, message in messages %}
+                <div class="alert alert-{{ category }}">{{ message }}</div>
+            {% endfor %}
+        {% endif %}
+    {% endwith %}
+
+    <form id="loginForm" method="POST" action="{{ url_for('login') }}">
+        <div class="input-group">
+            <label for="username">Usuário</label>
+            <div class="email-fixed">
+                <input type="text" id="username" name="username" required>
+                <span>@cantina.com</span>
+            </div>
+        </div>
+        <div class="input-group">
+            <label for="senha">Senha</label>
+            <input type="password" id="senha" name="senha" required>
+        </div>
+        <div class="d-grid">
+            <button type="submit" class="btn">Entrar</button>
+        </div>
+    </form>
+    <p>Não tem uma conta? <a href="/register">Registre-se</a></p>
+</div>
+
+<script>
+document.getElementById("loginForm").addEventListener("submit", function(event) {
+    event.preventDefault();
+    let usernameInput = document.getElementById("username");
+    let emailField = document.createElement("input");
+    emailField.type = "hidden";
+    emailField.name = "email";
+    emailField.value = usernameInput.value + "@cantina.com";
+    this.appendChild(emailField);
+    this.submit();
+});
+</script>
+
+{% endblock %}

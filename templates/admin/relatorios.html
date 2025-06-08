@@ -1,0 +1,188 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="container-fluid">
+    <h1 class="h3 mb-4">Relatórios de Vendas</h1>
+
+    <div class="row">
+        <!-- Card Total de Vendas -->
+        <div class="col-xl-3 col-md-6 mb-4">
+            <div class="card border-left-primary h-100 py-2">
+                <div class="card-body">
+                    <div class="row no-gutters align-items-center">
+                        <div class="col mr-2">
+                            <div class="text-xs font-weight-bold text-primary text-uppercase mb-1">
+                                Total de Vendas</div>
+                            <div class="h5 mb-0 font-weight-bold text-gray-800">{{ total_vendas }}</div>
+                        </div>
+                        <div class="col-auto">
+                            <i class='bx bx-cart fs-2 text-gray-300'></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Card Valor Total -->
+        <div class="col-xl-3 col-md-6 mb-4">
+            <div class="card border-left-success h-100 py-2">
+                <div class="card-body">
+                    <div class="row no-gutters align-items-center">
+                        <div class="col mr-2">
+                            <div class="text-xs font-weight-bold text-success text-uppercase mb-1">
+                                Valor Total</div>
+                            <div class="h5 mb-0 font-weight-bold text-gray-800">
+                                R$ {{ "%.2f"|format(valor_total_vendas) }}
+                            </div>
+                        </div>
+                        <div class="col-auto">
+                            <i class='bx bx-money fs-2 text-gray-300'></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row">
+        <!-- Vendas por Vendedor -->
+        <div class="col-xl-6 mb-4">
+            <div class="card">
+                <div class="card-header">
+                    <h6 class="m-0 font-weight-bold text-primary">Vendas por Vendedor</h6>
+                </div>
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table table-bordered">
+                            <thead>
+                                <tr>
+                                    <th>Vendedor</th>
+                                    <th>Total de Vendas</th>
+                                    <th>Valor Total</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for vendedor in vendas_por_vendedor %}
+                                <tr>
+                                    <td>{{ vendedor.nome }}</td>
+                                    <td>{{ vendedor.total_vendas }}</td>
+                                    <td>R$ {{ "%.2f"|format(vendedor.valor_total) }}</td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Produtos Mais Vendidos -->
+        <div class="col-xl-6 mb-4">
+            <div class="card">
+                <div class="card-header">
+                    <h6 class="m-0 font-weight-bold text-primary">Produtos Mais Vendidos</h6>
+                </div>
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table table-bordered">
+                            <thead>
+                                <tr>
+                                    <th>Produto</th>
+                                    <th>Quantidade</th>
+                                    <th>Valor Total</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for produto in produtos_mais_vendidos %}
+                                <tr>
+                                    <td>{{ produto.nome }}</td>
+                                    <td>{{ produto.quantidade_vendida }}</td>
+                                    <td>R$ {{ "%.2f"|format(produto.valor_total) }}</td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Gráficos -->
+    <div class="row">
+        <div class="col-xl-6 mb-4">
+            <div class="card">
+                <div class="card-header">
+                    <h6 class="m-0 font-weight-bold text-primary">Vendas por Vendedor (Gráfico)</h6>
+                </div>
+                <div class="card-body">
+                    <canvas id="vendasPorVendedorChart"></canvas>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-xl-6 mb-4">
+            <div class="card">
+                <div class="card-header">
+                    <h6 class="m-0 font-weight-bold text-primary">Produtos Mais Vendidos (Gráfico)</h6>
+                </div>
+                <div class="card-body">
+                    <canvas id="produtosMaisVendidosChart"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Dados para o gráfico de vendas por vendedor
+    const vendasPorVendedorData = {
+        labels: [{% for vendedor in vendas_por_vendedor %}'{{ vendedor.nome }}',{% endfor %}],
+        datasets: [{
+            label: 'Valor Total de Vendas',
+            data: [{% for vendedor in vendas_por_vendedor %}{{ vendedor.valor_total }},{% endfor %}],
+            backgroundColor: 'rgba(78, 115, 223, 0.5)',
+            borderColor: 'rgba(78, 115, 223, 1)',
+            borderWidth: 1
+        }]
+    };
+
+    // Dados para o gráfico de produtos mais vendidos
+    const produtosMaisVendidosData = {
+        labels: [{% for produto in produtos_mais_vendidos %}'{{ produto.nome }}',{% endfor %}],
+        datasets: [{
+            label: 'Quantidade Vendida',
+            data: [{% for produto in produtos_mais_vendidos %}{{ produto.quantidade_vendida }},{% endfor %}],
+            backgroundColor: 'rgba(28, 200, 138, 0.5)',
+            borderColor: 'rgba(28, 200, 138, 1)',
+            borderWidth: 1
+        }]
+    };
+
+    // Configuração dos gráficos
+    const options = {
+        responsive: true,
+        maintainAspectRatio: false,
+        scales: {
+            y: {
+                beginAtZero: true
+            }
+        }
+    };
+
+    // Criar gráficos
+    new Chart(document.getElementById('vendasPorVendedorChart'), {
+        type: 'bar',
+        data: vendasPorVendedorData,
+        options: options
+    });
+
+    new Chart(document.getElementById('produtosMaisVendidosChart'), {
+        type: 'bar',
+        data: produtosMaisVendidosData,
+        options: options
+    });
+});
+</script>
+{% endblock %}

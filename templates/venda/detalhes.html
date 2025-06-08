@@ -1,0 +1,60 @@
+<div class="modal-dialog">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h5 class="modal-title">Detalhes da Venda #{{ venda.id }}</h5>
+            <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+        </div>
+        <div class="modal-body">
+            <div class="mb-3">
+                <strong>Status:</strong>
+                <span class="badge {% if venda.status == 'concluída' %}bg-success{% else %}bg-warning{% endif %}">
+                    {{ venda.status|title }}
+                </span>
+            </div>
+            
+            <div class="mb-3">
+                <strong>Data:</strong>
+                <span>{{ venda.data_venda.strftime('%d/%m/%Y %H:%M') }}</span>
+            </div>
+            
+            <div class="mb-3">
+                <strong>Vendedor:</strong>
+                <span>{{ venda.vendedor.nome }}</span>
+            </div>
+            
+            <div class="mb-3">
+                <strong>Cliente:</strong>
+                <span>{{ venda.cliente.nome }}</span>
+            </div>
+            
+            <div class="table-responsive">
+                <table class="table table-bordered">
+                    <thead>
+                        <tr>
+                            <th>Produto</th>
+                            <th>Quantidade</th>
+                            <th>Preço Unit.</th>
+                            <th>Subtotal</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for item in itens %}
+                        <tr>
+                            <td>{{ item.produto.nome }}</td>
+                            <td>{{ item.quantidade }}</td>
+                            <td>{{ item.preco_unitario|currency }}</td>
+                            <td>{{ item.subtotal|currency }}</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                    <tfoot>
+                        <tr>
+                            <td colspan="3" class="text-end"><strong>Total:</strong></td>
+                            <td><strong>{{ venda.valor_total|currency }}</strong></td>
+                        </tr>
+                    </tfoot>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>

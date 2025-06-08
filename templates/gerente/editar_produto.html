@@ -1,0 +1,130 @@
+{% extends "base.html" %}
+
+{% block title %}Editar Produto{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="row">
+        <div class="col-md-8 offset-md-2">
+            <div class="card">
+                <div class="card-header">
+                    <h4 class="mb-0">Editar Produto</h4>
+                </div>
+                <div class="card-body">
+                    <form method="POST" enctype="multipart/form-data">
+                        <div class="mb-3">
+                            <label for="nome" class="form-label">Nome do Produto</label>
+                            <input type="text" class="form-control" id="nome" name="nome" value="{{ produto.nome }}" required>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label for="descricao" class="form-label">Descrição</label>
+                            <textarea class="form-control" id="descricao" name="descricao" rows="3">{{ produto.descricao }}</textarea>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label for="preco" class="form-label">Preço</label>
+                            <input type="text" class="form-control" id="preco" name="preco" value="{{ produto.preco }}" required>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label for="quantidade" class="form-label">Quantidade em Estoque</label>
+                            <input type="number" class="form-control" id="quantidade" name="quantidade" value="{{ produto.estoque }}" required>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label for="categoria" class="form-label">Categoria</label>
+                            <select class="form-select" id="categoria" name="categoria" required>
+                                {% for categoria in categorias %}
+                                <option value="{{ categoria.id }}" {% if categoria.id == produto.categoria_id %}selected{% endif %}>
+                                    {{ categoria.nome }}
+                                </option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label class="form-label">Imagem do Produto</label>
+                            {% if produto.imagem_url %}
+                            <div class="mb-2">
+                                <img src="{{ produto.imagem_url }}" alt="{{ produto.nome }}" class="img-thumbnail" style="max-width: 200px;">
+                            </div>
+                            {% endif %}
+                            
+                            <div class="form-check mb-2">
+                                <input class="form-check-input" type="radio" name="tipo_imagem" id="manter_imagem" value="manter" checked>
+                                <label class="form-check-label" for="manter_imagem">
+                                    Manter imagem atual
+                                </label>
+                            </div>
+                            
+                            <div class="form-check mb-2">
+                                <input class="form-check-input" type="radio" name="tipo_imagem" id="upload_imagem" value="upload">
+                                <label class="form-check-label" for="upload_imagem">
+                                    Upload de nova imagem
+                                </label>
+                            </div>
+                            
+                            <div class="form-check mb-2">
+                                <input class="form-check-input" type="radio" name="tipo_imagem" id="url_imagem" value="url">
+                                <label class="form-check-label" for="url_imagem">
+                                    URL da imagem
+                                </label>
+                            </div>
+                            
+                            <div id="upload_imagem_div" class="mt-2" style="display: none;">
+                                <input type="file" class="form-control" id="imagem" name="imagem" accept="image/*">
+                            </div>
+                            
+                            <div id="url_imagem_div" class="mt-2" style="display: none;">
+                                <input type="url" class="form-control" id="imagem_url" name="imagem_url" placeholder="https://...">
+                            </div>
+                        </div>
+                        
+                        <div class="text-end">
+                            <a href="{{ url_for('gerenciar_produtos') }}" class="btn btn-secondary">Cancelar</a>
+                            <button type="submit" class="btn btn-primary">Salvar Alterações</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Formatar preço
+    const precoInput = document.getElementById('preco');
+    precoInput.value = formatarMoeda(precoInput.value);
+    precoInput.addEventListener('input', function(e) {
+        let valor = e.target.value.replace(/\D/g, '');
+        valor = (valor/100).toFixed(2);
+        e.target.value = formatarMoeda(valor);
+    });
+    
+    // Controle de exibição dos campos de imagem
+    const radioButtons = document.querySelectorAll('input[name="tipo_imagem"]');
+    const uploadDiv = document.getElementById('upload_imagem_div');
+    const urlDiv = document.getElementById('url_imagem_div');
+    
+    radioButtons.forEach(radio => {
+        radio.addEventListener('change', function() {
+            uploadDiv.style.display = this.value === 'upload' ? 'block' : 'none';
+            urlDiv.style.display = this.value === 'url' ? 'block' : 'none';
+        });
+    });
+});
+
+function formatarMoeda(valor) {
+    valor = parseFloat(valor);
+    if (isNaN(valor)) valor = 0;
+    return valor.toLocaleString('pt-BR', {
+        style: 'currency',
+        currency: 'BRL'
+    });
+}
+</script>
+{% endblock %}

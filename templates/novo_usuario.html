@@ -1,0 +1,103 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row justify-content-center">
+        <div class="col-md-8">
+            <div class="card">
+                <div class="card-header">
+                    <h4 class="mb-0">Novo Usuário</h4>
+                </div>
+                <div class="card-body">
+                    <form method="POST">
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label">Nome Completo</label>
+                                <input type="text" class="form-control" name="nome" required>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label">Email</label>
+                                <input type="email" class="form-control" name="email" required>
+                            </div>
+                        </div>
+
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label">Senha</label>
+                                <input type="password" class="form-control" name="password" required>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label">Tipo de Usuário</label>
+                                <select class="form-select" name="tipo" id="tipoUsuario" required>
+                                    {% if current_user.tipo == 'admin' %}
+                                    <option value="admin">Administrador</option>
+                                    <option value="gerente">Gerente</option>
+                                    <option value="vendedor">Vendedor</option>
+                                    <option value="cliente">Cliente</option>
+                                    {% elif current_user.tipo == 'gerente' %}
+                                    <option value="vendedor">Vendedor</option>
+                                    <option value="cliente">Cliente</option>
+                                    {% else %}
+                                    <option value="cliente">Cliente</option>
+                                    {% endif %}
+                                </select>
+                            </div>
+                        </div>
+
+                        <!-- Campos específicos para Cliente -->
+                        <div id="camposCliente" class="row" style="display: none;">
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label">CPF</label>
+                                <input type="text" class="form-control" name="cpf" maxlength="14">
+                            </div>
+                        </div>
+
+                        <!-- Campos específicos para Funcionários -->
+                        <div id="camposFuncionario" class="row" style="display: none;">
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label">Matrícula</label>
+                                <input type="text" class="form-control" name="matricula">
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label">Departamento</label>
+                                <input type="text" class="form-control" name="departamento">
+                            </div>
+                        </div>
+
+                        <div class="d-grid gap-2 d-md-flex justify-content-md-end">
+                            <a href="{{ url_for(current_user.tipo + '_dashboard') }}" class="btn btn-secondary me-2">Cancelar</a>
+                            <button type="submit" class="btn btn-primary">Cadastrar</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const tipoUsuario = document.getElementById('tipoUsuario');
+    const camposCliente = document.getElementById('camposCliente');
+    const camposFuncionario = document.getElementById('camposFuncionario');
+
+    function toggleCampos() {
+        const tipo = tipoUsuario.value;
+        
+        if (tipo === 'cliente') {
+            camposCliente.style.display = 'flex';
+            camposFuncionario.style.display = 'none';
+        } else if (['vendedor', 'gerente'].includes(tipo)) {
+            camposCliente.style.display = 'none';
+            camposFuncionario.style.display = 'flex';
+        } else {
+            camposCliente.style.display = 'none';
+            camposFuncionario.style.display = 'none';
+        }
+    }
+
+    tipoUsuario.addEventListener('change', toggleCampos);
+    toggleCampos(); // Executa na carga inicial
+});
+</script>
+{% endblock %}

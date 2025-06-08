@@ -1,0 +1,141 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="container mt-4">
+    <h2>Gerenciamento de Usuários</h2>
+    
+    <!-- Formulário de Criação de Usuário -->
+    <div class="card mb-4">
+        <div class="card-header">
+            <h4>Novo Usuário</h4>
+        </div>
+        <div class="card-body">
+            <form action="{{ url_for('novo_usuario') }}" method="POST">
+                <div class="row">
+                    <div class="col-md-6">
+                        <div class="mb-3">
+                            <label for="nome" class="form-label">Nome</label>
+                            <input type="text" class="form-control" id="nome" name="nome" required>
+                        </div>
+                        <div class="mb-3">
+                            <label for="email" class="form-label">Email</label>
+                            <input type="email" class="form-control" id="email" name="email" required>
+                        </div>
+                        <div class="mb-3">
+                            <label for="password" class="form-label">Senha</label>
+                            <input type="password" class="form-control" id="password" name="password" required>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="mb-3">
+                            <label for="tipo" class="form-label">Tipo de Usuário</label>
+                            <select class="form-select" id="tipo" name="tipo" required>
+                                <option value="cliente">Cliente</option>
+                                <option value="vendedor">Vendedor</option>
+                                <option value="gerente">Gerente</option>
+                                <option value="admin">Administrador</option>
+                            </select>
+                        </div>
+                        <div class="mb-3">
+                            <label for="cpf" class="form-label">CPF</label>
+                            <input type="text" class="form-control" id="cpf" name="cpf" required>
+                        </div>
+                        <div class="mb-3">
+                            <label for="loja_id" class="form-label">Loja</label>
+                            <select class="form-select" id="loja_id" name="loja_id">
+                                <option value="">Selecione uma loja</option>
+                                {% for loja in lojas %}
+                                <option value="{{ loja.id }}">{{ loja.nome }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                    </div>
+                </div>
+                <button type="submit" class="btn btn-primary">Criar Usuário</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Lista de Usuários -->
+    <div class="card">
+        <div class="card-header">
+            <h4>Usuários Cadastrados</h4>
+        </div>
+        <div class="card-body">
+            <div class="table-responsive">
+                <table class="table table-striped">
+                    <thead>
+                        <tr>
+                            <th>Nome</th>
+                            <th>Email</th>
+                            <th>Tipo</th>
+                            <th>CPF</th>
+                            <th>Loja</th>
+                            <th>Status</th>
+                            <th>Ações</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for usuario in usuarios %}
+                        <tr>
+                            <td>{{ usuario.nome }}</td>
+                            <td>{{ usuario.email }}</td>
+                            <td>{{ usuario.tipo }}</td>
+                            <td>{{ usuario.cpf }}</td>
+                            <td>{{ usuario.loja.nome if usuario.loja else '-' }}</td>
+                            <td>
+                                <span class="badge {% if usuario.ativo %}bg-success{% else %}bg-danger{% endif %}">
+                                    {{ 'Ativo' if usuario.ativo else 'Inativo' }}
+                                </span>
+                            </td>
+                            <td>
+                                <div class="btn-group">
+                                    <a href="{{ url_for('editar_usuario', id=usuario.id) }}" class="btn btn-sm btn-primary">Editar</a>
+                                    {% if usuario.ativo %}
+                                    <button onclick="desativarUsuario({{ usuario.id }})" class="btn btn-sm btn-danger">Desativar</button>
+                                    {% else %}
+                                    <button onclick="ativarUsuario({{ usuario.id }})" class="btn btn-sm btn-success">Ativar</button>
+                                    {% endif %}
+                                </div>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+function desativarUsuario(id) {
+    if (confirm('Tem certeza que deseja desativar este usuário?')) {
+        fetch(`/admin/usuario/${id}/desativar`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            }
+        }).then(response => {
+            if (response.ok) {
+                window.location.reload();
+            }
+        });
+    }
+}
+
+function ativarUsuario(id) {
+    if (confirm('Tem certeza que deseja ativar este usuário?')) {
+        fetch(`/admin/usuario/${id}/ativar`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            }
+        }).then(response => {
+            if (response.ok) {
+                window.location.reload();
+            }
+        });
+    }
+}
+</script>
+{% endblock %}

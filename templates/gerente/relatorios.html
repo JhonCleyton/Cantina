@@ -1,0 +1,132 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-12">
+            <div class="card shadow-sm mb-4">
+                <div class="card-body">
+                    <h1 class="h3 mb-4">Relatórios - {{ loja.nome }}</h1>
+                    
+                    <!-- Cards de Resumo -->
+                    <div class="row mb-4">
+                        <div class="col-md-3">
+                            <div class="card bg-primary text-white">
+                                <div class="card-body">
+                                    <h5 class="card-title">Total de Vendas</h5>
+                                    <p class="display-6">{{ total_vendas }}</p>
+                                    <small>{{ vendas_mes }} vendas este mês</small>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="card bg-success text-white">
+                                <div class="card-body">
+                                    <h5 class="card-title">Valor Total</h5>
+                                    <p class="display-6">{{ valor_total|currency }}</p>
+                                    <small>{{ valor_mes|currency }} este mês</small>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Produtos Mais Vendidos -->
+                    <div class="card mb-4">
+                        <div class="card-header">
+                            <h5 class="mb-0">Produtos Mais Vendidos</h5>
+                        </div>
+                        <div class="card-body">
+                            <div class="table-responsive">
+                                <table class="table">
+                                    <thead>
+                                        <tr>
+                                            <th>Produto</th>
+                                            <th>Quantidade Vendida</th>
+                                            <th>Valor Total</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {% for produto in produtos_vendidos %}
+                                        <tr>
+                                            <td>{{ produto.nome }}</td>
+                                            <td>{{ produto.total_vendido }}</td>
+                                            <td>{{ produto.valor_total|currency }}</td>
+                                        </tr>
+                                        {% endfor %}
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Vendedores -->
+                    <div class="card mb-4">
+                        <div class="card-header">
+                            <h5 class="mb-0">Desempenho dos Vendedores</h5>
+                        </div>
+                        <div class="card-body">
+                            <div class="table-responsive">
+                                <table class="table">
+                                    <thead>
+                                        <tr>
+                                            <th>Vendedor</th>
+                                            <th>Total de Vendas</th>
+                                            <th>Valor Total</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {% for vendedor in vendedores %}
+                                        <tr>
+                                            <td>{{ vendedor.nome }}</td>
+                                            <td>{{ vendedor.total_vendas }}</td>
+                                            <td>{{ vendedor.valor_total|currency }}</td>
+                                        </tr>
+                                        {% endfor %}
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Histórico de Vendas -->
+                    <div class="card">
+                        <div class="card-header">
+                            <h5 class="mb-0">Histórico de Vendas</h5>
+                        </div>
+                        <div class="card-body">
+                            <div class="table-responsive">
+                                <table class="table">
+                                    <thead>
+                                        <tr>
+                                            <th>Data</th>
+                                            <th>Cliente</th>
+                                            <th>Vendedor</th>
+                                            <th>Valor</th>
+                                            <th>Status</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {% for venda in vendas %}
+                                        <tr>
+                                            <td>{{ venda.data_venda.strftime('%d/%m/%Y %H:%M') }}</td>
+                                            <td>{{ venda.cliente.nome }}</td>
+                                            <td>{{ venda.vendedor.nome }}</td>
+                                            <td>{{ venda.valor_total|currency }}</td>
+                                            <td>
+                                                <span class="badge {% if venda.data_venda >= inicio_mes %}bg-success{% else %}bg-secondary{% endif %}">
+                                                    {{ venda.status }}
+                                                </span>
+                                            </td>
+                                        </tr>
+                                        {% endfor %}
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

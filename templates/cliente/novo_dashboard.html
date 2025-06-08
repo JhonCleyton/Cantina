@@ -1,0 +1,252 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="container-fluid">
+    <h1 class="h3 mb-4">Minha Conta</h1>
+
+    <!-- Cards de Resumo -->
+    <div class="row">
+        <!-- Saldo -->
+        <div class="col-xl-3 col-md-6 mb-4">
+            <div class="card border-left-primary h-100 py-2">
+                <div class="card-body">
+                    <div class="row no-gutters align-items-center">
+                        <div class="col mr-2">
+                            <div class="text-xs font-weight-bold text-primary text-uppercase mb-1">
+                                Total Gasto</div>
+                            <div class="h5 mb-0 font-weight-bold text-gray-800">
+                                R$ {{ "%.2f"|format(total_gasto) }}
+                            </div>
+                        </div>
+                        <div class="col-auto">
+                            <i class='bx bx-money fs-2 text-gray-300'></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- QR Code -->
+        <div class="col-xl-3 col-md-6 mb-4">
+            <div class="card border-left-warning h-100 py-2">
+                <div class="card-body">
+                    <div class="row no-gutters align-items-center">
+                        <div class="col mr-2">
+                            <div class="text-xs font-weight-bold text-warning text-uppercase mb-1">
+                                Meu QR Code</div>
+                            <button id="btn-gerar-qr" class="btn btn-primary">Gerar QR Code</button>
+                            <div id="qr-code" class="d-none">
+                                <img src="" alt="QR Code" class="img-fluid" />
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Total de Compras -->
+        <div class="col-xl-3 col-md-6 mb-4">
+            <div class="card border-left-success h-100 py-2">
+                <div class="card-body">
+                    <div class="row no-gutters align-items-center">
+                        <div class="col mr-2">
+                            <div class="text-xs font-weight-bold text-success text-uppercase mb-1">
+                                Total de Compras</div>
+                            <div class="h5 mb-0 font-weight-bold text-gray-800">
+                                {{ total_compras }}
+                            </div>
+                        </div>
+                        <div class="col-auto">
+                            <i class='bx bx-shopping-bag fs-2 text-gray-300'></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Valor Total Gasto -->
+        <div class="col-xl-3 col-md-6 mb-4">
+            <div class="card border-left-info h-100 py-2">
+                <div class="card-body">
+                    <div class="row no-gutters align-items-center">
+                        <div class="col mr-2">
+                            <div class="text-xs font-weight-bold text-info text-uppercase mb-1">
+                                Valor Total em Compras</div>
+                            <div class="h5 mb-0 font-weight-bold text-gray-800">
+                                R$ {{ "%.2f"|format(total_gasto) }}
+                            </div>
+                        </div>
+                        <div class="col-auto">
+                            <i class='bx bx-money fs-2 text-gray-300'></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Vendas Pendentes -->
+    <div class="card mb-4">
+        <div class="card-header">
+            <h6 class="m-0 font-weight-bold text-primary">Vendas Pendentes</h6>
+        </div>
+        <div class="card-body">
+            {% for venda in vendas_pendentes %}
+            <div class="alert alert-warning">
+                <div class="d-flex justify-content-between align-items-center mb-2">
+                    <h6 class="mb-0">Venda #{{ venda.id }}</h6>
+                    <span class="badge bg-warning">Pendente</span>
+                </div>
+                <p class="mb-2">Vendedor: {{ venda.vendedor.nome }}</p>
+                <p class="mb-2">Valor Total: R$ {{ "%.2f"|format(venda.valor_total) }}</p>
+                <div class="d-flex justify-content-between align-items-center">
+                    <button class="btn btn-sm btn-primary" onclick="verDetalhes({{ venda.id }})">
+                        <i class='bx bx-detail'></i> Ver Detalhes
+                    </button>
+                    <button class="btn btn-sm btn-success" onclick="confirmarVenda({{ venda.id }})">
+                        <i class='bx bx-check'></i> Confirmar Venda
+                    </button>
+                </div>
+            </div>
+            {% else %}
+            <p class="text-muted text-center mb-0">Nenhuma venda pendente</p>
+            {% endfor %}
+        </div>
+    </div>
+
+    <!-- Histórico de Compras -->
+    <div class="card mb-4">
+        <div class="card-header">
+            <h6 class="m-0 font-weight-bold text-primary">Minhas Compras</h6>
+        </div>
+        <div class="card-body">
+            <div class="table-responsive">
+                <table class="table table-bordered" id="tabelaCompras">
+                    <thead>
+                        <tr>
+                            <th>Data</th>
+                            <th>Produtos</th>
+                            <th>Vendedor</th>
+                            <th>Valor Total</th>
+                            <th>Método de Pagamento</th>
+                            <th>Status</th>
+                            <th>Ações</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for compra in compras %}
+                        <tr>
+                            <td>{{ compra.data_venda.strftime('%d/%m/%Y %H:%M') }}</td>
+                            <td>
+                                {% for item in compra.itens %}
+                                {{ item.quantidade }}x {{ item.produto.nome }}<br>
+                                {% endfor %}
+                            </td>
+                            <td>{{ compra.vendedor.nome }}</td>
+                            <td>R$ {{ "%.2f"|format(compra.valor_total) }}</td>
+                            <td>
+                                <span class="badge bg-{{ 'success' if 'qr_code' in compra.status else 'primary' }}">
+                                    {% if 'qr_code' in compra.status %}
+                                    QR Code
+                                    {% else %}
+                                    Normal
+                                    {% endif %}
+                                </span>
+                            </td>
+                            <td>
+                                <span class="badge bg-{{ 'success' if compra.status == 'concluída' else 'warning' }}">
+                                    {{ compra.status }}
+                                </span>
+                            </td>
+                            <td>
+                                <button class="btn btn-sm btn-info" onclick="verDetalhes({{ compra.id }})">
+                                    <i class='bx bx-detail'></i>
+                                </button>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal de Detalhes -->
+<div class="modal fade" id="modalDetalhes" tabindex="-1">
+    <!-- Conteúdo será carregado dinamicamente -->
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Inicializar DataTable
+    $('#tabelaCompras').DataTable({
+        language: {
+            url: '//cdn.datatables.net/plug-ins/1.13.7/i18n/pt-BR.json'
+        },
+        order: [[0, 'desc']]
+    });
+});
+
+async function verDetalhes(compraId) {
+    try {
+        const response = await fetch(`/venda/${compraId}`);
+        const html = await response.text();
+        
+        document.getElementById('modalDetalhes').innerHTML = html;
+        new bootstrap.Modal(document.getElementById('modalDetalhes')).show();
+        
+    } catch (error) {
+        alert('Erro ao carregar detalhes: ' + error.message);
+    }
+}
+
+async function confirmarVenda(vendaId) {
+    if (!confirm('Deseja confirmar esta venda?')) {
+        return;
+    }
+    
+    try {
+        const response = await fetch(`/cliente/confirmar_venda/${vendaId}`, {
+            method: 'POST'
+        });
+        
+        const data = await response.json();
+        
+        if (data.error) {
+            throw new Error(data.error);
+        }
+        
+        alert('Venda confirmada com sucesso!');
+        location.reload();
+        
+    } catch (error) {
+        alert('Erro ao confirmar venda: ' + error.message);
+    }
+}
+
+async function gerarQRCode() {
+    try {
+        const response = await fetch('/cliente/gerar_qr_code');
+        const data = await response.json();
+        
+        if (data.error) {
+            throw new Error(data.error);
+        }
+        
+        const qrCodeDiv = document.getElementById('qr-code');
+        qrCodeDiv.innerHTML = `
+            <img src="${data.qr_code}" class="img-fluid" alt="QR Code">
+            <p class="mt-2 text-muted">Mostre este QR code ao vendedor para finalizar sua compra</p>
+        `;
+        qrCodeDiv.classList.remove('d-none');
+        
+    } catch (error) {
+        console.error('Erro ao gerar QR code:', error);
+        alert('Erro ao gerar QR code: ' + error.message);
+    }
+}
+
+document.getElementById('btn-gerar-qr').addEventListener('click', gerarQRCode);
+</script>
+{% endblock %}

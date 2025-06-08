@@ -1,0 +1,209 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="card-title mb-0">Meu Perfil</h5>
+                </div>
+                <div class="card-body">
+                    <form id="formPerfil" enctype="multipart/form-data">
+                        <div class="row">
+                            <!-- Foto de Perfil -->
+                            <div class="col-12 mb-4 text-center">
+                                <div class="position-relative d-inline-block">
+                                    {% if current_user.foto_perfil %}
+                                        <img src="{{ url_for('static', filename='uploads/profile_pics/' + current_user.foto_perfil) }}" 
+                                             class="rounded-circle" style="width: 150px; height: 150px; object-fit: cover;" 
+                                             alt="Foto de perfil">
+                                    {% else %}
+                                        <div class="avatar-circle" style="width: 150px; height: 150px; font-size: 48px;">
+                                            {{ current_user.nome[:1] }}
+                                        </div>
+                                    {% endif %}
+                                    <label for="foto_perfil" class="position-absolute bottom-0 end-0 bg-primary rounded-circle p-2 cursor-pointer">
+                                        <i class="bx bx-camera text-white"></i>
+                                        <input type="file" id="foto_perfil" name="foto_perfil" class="d-none" accept="image/*">
+                                    </label>
+                                </div>
+                            </div>
+
+                            <!-- Dados Básicos -->
+                            <div class="col-md-6 mb-3">
+                                <h6 class="mb-3">Dados Básicos</h6>
+                                <div class="mb-3">
+                                    <label for="nome" class="form-label">Nome Completo</label>
+                                    <input type="text" class="form-control" id="nome" name="nome" value="{{ current_user.nome }}" required>
+                                </div>
+                                <div class="mb-3">
+                                    <label for="email" class="form-label">E-mail</label>
+                                    <input type="email" class="form-control" id="email" name="email" value="{{ current_user.email }}" required>
+                                </div>
+                                <div class="mb-3">
+                                    <label for="telefone" class="form-label">Telefone</label>
+                                    <input type="tel" class="form-control" id="telefone" name="telefone" value="{{ current_user.telefone }}">
+                                </div>
+                                <div class="mb-3">
+                                    <label for="bio" class="form-label">Biografia</label>
+                                    <textarea class="form-control" id="bio" name="bio" rows="3">{{ current_user.bio }}</textarea>
+                                </div>
+                            </div>
+
+                            <!-- Endereço -->
+                            <div class="col-md-6 mb-3">
+                                <h6 class="mb-3">Endereço</h6>
+                                <div class="mb-3">
+                                    <label for="endereco" class="form-label">Endereço</label>
+                                    <input type="text" class="form-control" id="endereco" name="endereco" value="{{ current_user.endereco }}">
+                                </div>
+                                <div class="mb-3">
+                                    <label for="cidade" class="form-label">Cidade</label>
+                                    <input type="text" class="form-control" id="cidade" name="cidade" value="{{ current_user.cidade }}">
+                                </div>
+                                <div class="row mb-3">
+                                    <div class="col-4">
+                                        <label for="estado" class="form-label">Estado</label>
+                                        <select class="form-select" id="estado" name="estado">
+                                            <option value="">Selecione...</option>
+                                            {% for uf in ['AC', 'AL', 'AP', 'AM', 'BA', 'CE', 'DF', 'ES', 'GO', 'MA', 'MT', 'MS', 'MG', 'PA', 'PB', 'PR', 'PE', 'PI', 'RJ', 'RN', 'RS', 'RO', 'RR', 'SC', 'SP', 'SE', 'TO'] %}
+                                                <option value="{{ uf }}" {% if current_user.estado == uf %}selected{% endif %}>{{ uf }}</option>
+                                            {% endfor %}
+                                        </select>
+                                    </div>
+                                    <div class="col-8">
+                                        <label for="cep" class="form-label">CEP</label>
+                                        <input type="text" class="form-control" id="cep" name="cep" value="{{ current_user.cep }}">
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Preferências -->
+                            <div class="col-md-6 mb-3">
+                                <h6 class="mb-3">Preferências</h6>
+                                <div class="form-check form-switch mb-3">
+                                    <input class="form-check-input" type="checkbox" id="tema_escuro" name="tema_escuro" {% if current_user.tema_escuro %}checked{% endif %}>
+                                    <label class="form-check-label" for="tema_escuro">Tema Escuro</label>
+                                </div>
+                                <div class="form-check form-switch mb-3">
+                                    <input class="form-check-input" type="checkbox" id="notificacoes_email" name="notificacoes_email" {% if current_user.notificacoes_email %}checked{% endif %}>
+                                    <label class="form-check-label" for="notificacoes_email">Receber notificações por e-mail</label>
+                                </div>
+                            </div>
+
+                            <!-- Alterar Senha -->
+                            <div class="col-md-6 mb-3">
+                                <h6 class="mb-3">Alterar Senha</h6>
+                                <div class="mb-3">
+                                    <label for="senha_atual" class="form-label">Senha Atual</label>
+                                    <input type="password" class="form-control" id="senha_atual" name="senha_atual">
+                                </div>
+                                <div class="mb-3">
+                                    <label for="nova_senha" class="form-label">Nova Senha</label>
+                                    <input type="password" class="form-control" id="nova_senha" name="nova_senha">
+                                </div>
+                                <div class="mb-3">
+                                    <label for="confirmar_senha" class="form-label">Confirmar Nova Senha</label>
+                                    <input type="password" class="form-control" id="confirmar_senha">
+                                </div>
+                            </div>
+
+                            <!-- Botões -->
+                            <div class="col-12 text-end">
+                                <button type="button" class="btn btn-secondary" onclick="window.history.back()">Cancelar</button>
+                                <button type="submit" class="btn btn-primary">Salvar Alterações</button>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- JavaScript para manipulação do formulário -->
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const formPerfil = document.getElementById('formPerfil');
+    const inputFoto = document.getElementById('foto_perfil');
+    
+    // Preview da foto
+    inputFoto.addEventListener('change', function(e) {
+        const file = e.target.files[0];
+        if (file) {
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                const img = document.querySelector('.rounded-circle') || document.createElement('img');
+                img.src = e.target.result;
+                img.className = 'rounded-circle';
+                img.style = 'width: 150px; height: 150px; object-fit: cover;';
+                img.alt = 'Foto de perfil';
+                
+                const avatarCircle = document.querySelector('.avatar-circle');
+                if (avatarCircle) {
+                    avatarCircle.replaceWith(img);
+                }
+            }
+            reader.readAsDataURL(file);
+        }
+    });
+    
+    // Validação e envio do formulário
+    formPerfil.addEventListener('submit', function(e) {
+        e.preventDefault();
+        
+        // Validar senha
+        const novaSenha = document.getElementById('nova_senha').value;
+        const confirmarSenha = document.getElementById('confirmar_senha').value;
+        
+        if (novaSenha && novaSenha !== confirmarSenha) {
+            alert('As senhas não coincidem!');
+            return;
+        }
+        
+        // Enviar formulário
+        const formData = new FormData(formPerfil);
+        
+        fetch('/perfil/editar', {
+            method: 'POST',
+            body: formData
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                // Atualizar a página para mostrar as alterações
+                window.location.reload();
+            } else {
+                alert(data.message || 'Erro ao atualizar perfil');
+            }
+        })
+        .catch(error => {
+            console.error('Erro:', error);
+            alert('Erro ao atualizar perfil');
+        });
+    });
+    
+    // Máscara para CEP
+    const cepInput = document.getElementById('cep');
+    cepInput.addEventListener('input', function(e) {
+        let value = e.target.value.replace(/\D/g, '');
+        if (value.length > 8) value = value.slice(0, 8);
+        if (value.length > 5) {
+            value = value.slice(0, 5) + '-' + value.slice(5);
+        }
+        e.target.value = value;
+    });
+    
+    // Máscara para telefone
+    const telefoneInput = document.getElementById('telefone');
+    telefoneInput.addEventListener('input', function(e) {
+        let value = e.target.value.replace(/\D/g, '');
+        if (value.length > 11) value = value.slice(0, 11);
+        if (value.length > 2) value = '(' + value.slice(0, 2) + ') ' + value.slice(2);
+        if (value.length > 10) value = value.slice(0, 10) + '-' + value.slice(10);
+        e.target.value = value;
+    });
+});
+</script>
+{% endblock %}

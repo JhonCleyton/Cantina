@@ -1,0 +1,243 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-12">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <div>
+                    <h1 class="h3 mb-0">Vendedores - {{ loja.nome }}</h1>
+                    <p class="text-muted mb-0">Gerenciamento da equipe de vendas</p>
+                </div>
+                <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#modalNovoVendedor">
+                    <i class='bx bx-user-plus'></i> Novo Vendedor
+                </button>
+            </div>
+
+            <!-- Estatísticas da Equipe -->
+            <div class="row mb-4">
+                <div class="col-md-3">
+                    <div class="card">
+                        <div class="card-body">
+                            <div class="d-flex justify-content-between align-items-center">
+                                <div>
+                                    <h6 class="text-muted mb-1">Total de Vendedores</h6>
+                                    <h3 class="mb-0">{{ vendedores|length }}</h3>
+                                </div>
+                                <div class="text-primary">
+                                    <i class='bx bx-group fs-1'></i>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="card">
+                        <div class="card-body">
+                            <div class="d-flex justify-content-between align-items-center">
+                                <div>
+                                    <h6 class="text-muted mb-1">Vendedores Ativos</h6>
+                                    <h3 class="mb-0">{{ vendedores|selectattr('ativo', 'true')|list|length }}</h3>
+                                </div>
+                                <div class="text-success">
+                                    <i class='bx bx-user-check fs-1'></i>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="card">
+                        <div class="card-body">
+                            <div class="d-flex justify-content-between align-items-center">
+                                <div>
+                                    <h6 class="text-muted mb-1">Vendas do Mês</h6>
+                                    {% set vendas_mes = namespace(total=0) %}
+                                    {% for vendedor in vendedores %}
+                                        {% for venda in vendedor.vendas_realizadas %}
+                                            {% if venda.data_venda.month == hoje.month %}
+                                                {% set vendas_mes.total = vendas_mes.total + 1 %}
+                                            {% endif %}
+                                        {% endfor %}
+                                    {% endfor %}
+                                    <h3 class="mb-0">{{ vendas_mes.total }}</h3>
+                                </div>
+                                <div class="text-info">
+                                    <i class='bx bx-shopping-bag fs-1'></i>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="card">
+                        <div class="card-body">
+                            <div class="d-flex justify-content-between align-items-center">
+                                <div>
+                                    <h6 class="text-muted mb-1">Média de Vendas</h6>
+                                    {% if vendedores|length > 0 %}
+                                    <h3 class="mb-0">{{ (vendas_mes.total / vendedores|length)|round(1) }}</h3>
+                                    {% else %}
+                                    <h3 class="mb-0">0</h3>
+                                    {% endif %}
+                                </div>
+                                <div class="text-warning">
+                                    <i class='bx bx-line-chart fs-1'></i>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Lista de Vendedores -->
+            <div class="card">
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table table-hover">
+                            <thead>
+                                <tr>
+                                    <th>Vendedor</th>
+                                    <th>Matrícula</th>
+                                    <th>Email</th>
+                                    <th>Vendas Realizadas</th>
+                                    <th>Última Venda</th>
+                                    <th>Status</th>
+                                    <th>Ações</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for vendedor in vendedores %}
+                                <tr>
+                                    <td>
+                                        <div class="d-flex align-items-center">
+                                            <div class="avatar-sm me-2">
+                                                <i class='bx bx-user fs-4'></i>
+                                            </div>
+                                            <div>
+                                                <h6 class="mb-0">{{ vendedor.nome }}</h6>
+                                                <small class="text-muted">{{ vendedor.departamento }}</small>
+                                            </div>
+                                        </div>
+                                    </td>
+                                    <td>{{ vendedor.matricula }}</td>
+                                    <td>{{ vendedor.email }}</td>
+                                    <td>{{ vendedor.vendas_realizadas|length }}</td>
+                                    <td>
+                                        {% if vendedor.vendas_realizadas %}
+                                            {% set ultima_venda = vendedor.vendas_realizadas|sort(attribute='data_venda')|last %}
+                                            {{ ultima_venda.data_venda.strftime('%d/%m/%Y %H:%M') }}
+                                        {% else %}
+                                            <span class="text-muted">Nenhuma venda</span>
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        <span class="badge bg-{{ 'success' if vendedor.ativo else 'danger' }}">
+                                            {{ 'Ativo' if vendedor.ativo else 'Inativo' }}
+                                        </span>
+                                    </td>
+                                    <td>
+                                        <div class="btn-group btn-group-sm">
+                                            <button class="btn btn-primary" onclick="verDetalhesVendedor({{ vendedor.id }})">
+                                                <i class='bx bx-show'></i>
+                                            </button>
+                                            <button class="btn btn-info" onclick="editarVendedor({{ vendedor.id }})">
+                                                <i class='bx bx-edit'></i>
+                                            </button>
+                                            <button class="btn btn-{{ 'danger' if vendedor.ativo else 'success' }}" 
+                                                    onclick="alterarStatusVendedor({{ vendedor.id }}, {{ 'false' if vendedor.ativo else 'true' }})">
+                                                <i class='bx bx-power-off'></i>
+                                            </button>
+                                        </div>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal Novo Vendedor -->
+<div class="modal fade" id="modalNovoVendedor" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Novo Vendedor</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <form action="{{ url_for('novo_vendedor') }}" method="POST">
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label for="nome" class="form-label">Nome Completo</label>
+                        <input type="text" class="form-control" id="nome" name="nome" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="email" class="form-label">E-mail</label>
+                        <input type="email" class="form-control" id="email" name="email" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="cpf" class="form-label">CPF</label>
+                        <input type="text" class="form-control" id="cpf" name="cpf" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="telefone" class="form-label">Telefone</label>
+                        <input type="text" class="form-control" id="telefone" name="telefone">
+                    </div>
+                    <div class="alert alert-info">
+                        <small>
+                            <i class="bx bx-info-circle me-1"></i>
+                            A senha inicial será: <strong>123456</strong>
+                        </small>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="submit" class="btn btn-primary">Cadastrar</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+function verDetalhesVendedor(vendedorId) {
+    window.location.href = `/gerente/vendedores/${vendedorId}`;
+}
+
+function editarVendedor(vendedorId) {
+    window.location.href = `/gerente/vendedores/${vendedorId}/editar`;
+}
+
+function alterarStatusVendedor(vendedorId, novoStatus) {
+    if (confirm('Tem certeza que deseja ' + (novoStatus ? 'ativar' : 'desativar') + ' este vendedor?')) {
+        fetch(`/gerente/vendedores/${vendedorId}/status`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({ ativo: novoStatus })
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                window.location.reload();
+            } else {
+                alert('Erro ao alterar status do vendedor');
+            }
+        });
+    }
+}
+
+// Máscara para CPF
+document.getElementById('cpf').addEventListener('input', function (e) {
+    let x = e.target.value.replace(/\D/g, '').match(/(\d{0,3})(\d{0,3})(\d{0,3})(\d{0,2})/);
+    e.target.value = !x[2] ? x[1] : x[1] + '.' + x[2] + (x[3] ? '.' + x[3] : '') + (x[4] ? '-' + x[4] : '');
+});
+</script>
+{% endblock %}

@@ -1,0 +1,107 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h1 class="h3 mb-0">Gerenciar Produtos</h1>
+        <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#novoProdutoModal">
+            <i class='bx bx-plus'></i> Novo Produto
+        </button>
+    </div>
+
+    <div class="row">
+        {% for produto in produtos %}
+        <div class="col-md-4 mb-4">
+            <div class="card h-100">
+                {% if produto.imagem_url %}
+                <img src="{{ produto.imagem_url }}" class="card-img-top" alt="{{ produto.nome }}">
+                {% endif %}
+                <div class="card-body">
+                    <h5 class="card-title">{{ produto.nome }}</h5>
+                    <p class="card-text">{{ produto.descricao }}</p>
+                    <div class="d-flex justify-content-between align-items-center mb-2">
+                        <span class="badge bg-primary">{{ produto.categoria.nome }}</span>
+                        <span class="text-success fw-bold">R$ {{ "%.2f"|format(produto.preco) }}</span>
+                    </div>
+                    <div class="d-flex justify-content-between align-items-center">
+                        <small class="text-muted">Estoque: {{ produto.estoque }}</small>
+                        <div class="btn-group">
+                            <button class="btn btn-sm btn-outline-primary" onclick="editarProduto({{ produto.id }})">
+                                <i class='bx bx-edit-alt'></i>
+                            </button>
+                            <button class="btn btn-sm btn-outline-danger" onclick="excluirProduto({{ produto.id }})">
+                                <i class='bx bx-trash'></i>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+</div>
+
+<!-- Modal Novo Produto -->
+<div class="modal fade" id="novoProdutoModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Novo Produto</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <form method="POST" enctype="multipart/form-data">
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label for="nome" class="form-label">Nome</label>
+                        <input type="text" class="form-control" id="nome" name="nome" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="descricao" class="form-label">Descrição</label>
+                        <textarea class="form-control" id="descricao" name="descricao" rows="3"></textarea>
+                    </div>
+                    <div class="mb-3">
+                        <label for="preco" class="form-label">Preço</label>
+                        <div class="input-group">
+                            <span class="input-group-text">R$</span>
+                            <input type="number" class="form-control" id="preco" name="preco" step="0.01" required>
+                        </div>
+                    </div>
+                    <div class="mb-3">
+                        <label for="estoque" class="form-label">Estoque</label>
+                        <input type="number" class="form-control" id="estoque" name="estoque" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="categoria_id" class="form-label">Categoria</label>
+                        <select class="form-select" id="categoria_id" name="categoria_id" required>
+                            <option value="">Selecione uma categoria</option>
+                            {% for categoria in categorias %}
+                            <option value="{{ categoria.id }}">{{ categoria.nome }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label for="imagem_url" class="form-label">URL da Imagem</label>
+                        <input type="url" class="form-control" id="imagem_url" name="imagem_url">
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="submit" class="btn btn-primary">Criar Produto</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<script>
+function editarProduto(id) {
+    // Implementar edição
+}
+
+function excluirProduto(id) {
+    if (confirm('Tem certeza que deseja excluir este produto?')) {
+        // Implementar exclusão
+    }
+}
+</script>
+{% endblock %}

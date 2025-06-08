@@ -1,0 +1,242 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-12">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <div>
+                    <h1 class="h3 mb-0">Dashboard - {{ loja.nome }}</h1>
+                    <p class="text-muted mb-0">Bem-vindo, {{ current_user.nome }}</p>
+                </div>
+                <div class="btn-group">
+                    <a href="{{ url_for('gerenciar_produtos_loja') }}" class="btn btn-primary">
+                        <i class='bx bx-package'></i> Produtos
+                    </a>
+                    <a href="{{ url_for('gerenciar_vendedores_loja') }}" class="btn btn-primary">
+                        <i class='bx bx-user'></i> Vendedores
+                    </a>
+                    <a href="{{ url_for('relatorios_loja') }}" class="btn btn-primary">
+                        <i class='bx bx-line-chart'></i> Relatórios
+                    </a>
+                </div>
+            </div>
+
+            <!-- Cards de Estatísticas -->
+            <div class="row mb-4">
+                <div class="col-md-3">
+                    <div class="card">
+                        <div class="card-body">
+                            <div class="d-flex justify-content-between align-items-center">
+                                <div>
+                                    <h6 class="text-muted mb-1">Total de Vendas</h6>
+                                    <h3 class="mb-0">{{ total_vendas }}</h3>
+                                </div>
+                                <div class="text-primary">
+                                    <i class='bx bx-shopping-bag fs-1'></i>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="card">
+                        <div class="card-body">
+                            <div class="d-flex justify-content-between align-items-center">
+                                <div>
+                                    <h6 class="text-muted mb-1">Produtos</h6>
+                                    <h3 class="mb-0">{{ total_produtos }}</h3>
+                                </div>
+                                <div class="text-success">
+                                    <i class='bx bx-package fs-1'></i>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="card">
+                        <div class="card-body">
+                            <div class="d-flex justify-content-between align-items-center">
+                                <div>
+                                    <h6 class="text-muted mb-1">Vendedores</h6>
+                                    <h3 class="mb-0">{{ total_vendedores }}</h3>
+                                </div>
+                                <div class="text-info">
+                                    <i class='bx bx-user fs-1'></i>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="card">
+                        <div class="card-body">
+                            <div class="d-flex justify-content-between align-items-center">
+                                <div>
+                                    <h6 class="text-muted mb-1">Categorias</h6>
+                                    <h3 class="mb-0">{{ loja.categorias|length }}</h3>
+                                </div>
+                                <div class="text-warning">
+                                    <i class='bx bx-category fs-1'></i>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="row">
+                <!-- Vendas Recentes -->
+                <div class="col-md-8 mb-4">
+                    <div class="card h-100">
+                        <div class="card-header">
+                            <h5 class="card-title mb-0">Vendas Recentes</h5>
+                        </div>
+                        <div class="card-body">
+                            <div class="table-responsive">
+                                <table class="table table-hover">
+                                    <thead>
+                                        <tr>
+                                            <th>ID</th>
+                                            <th>Cliente</th>
+                                            <th>Vendedor</th>
+                                            <th>Valor</th>
+                                            <th>Data</th>
+                                            <th>Status</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {% for venda in vendas_recentes %}
+                                        <tr>
+                                            <td>#{{ venda.id }}</td>
+                                            <td>{{ venda.cliente.nome }}</td>
+                                            <td>{{ venda.vendedor.nome }}</td>
+                                            <td>R$ {{ "%.2f"|format(venda.valor_total) }}</td>
+                                            <td>{{ venda.data_venda.strftime('%d/%m/%Y %H:%M') }}</td>
+                                            <td>
+                                                <span class="badge bg-{{ 'success' if venda.status == 'concluída' else 'warning' }}">
+                                                    {{ venda.status }}
+                                                </span>
+                                            </td>
+                                        </tr>
+                                        {% endfor %}
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Produtos com Baixo Estoque -->
+                <div class="col-md-4 mb-4">
+                    <div class="card h-100">
+                        <div class="card-header">
+                            <h5 class="card-title mb-0">Produtos com Baixo Estoque</h5>
+                        </div>
+                        <div class="card-body">
+                            <div class="list-group">
+                                {% for produto in produtos_baixo_estoque %}
+                                <div class="list-group-item">
+                                    <div class="d-flex justify-content-between align-items-center">
+                                        <div>
+                                            <h6 class="mb-1">{{ produto.nome }}</h6>
+                                            <small class="text-muted">{{ produto.categoria.nome }}</small>
+                                        </div>
+                                        <span class="badge bg-danger rounded-pill">{{ produto.estoque }}</span>
+                                    </div>
+                                </div>
+                                {% else %}
+                                <div class="text-center text-muted py-3">
+                                    <i class='bx bx-check-circle fs-1'></i>
+                                    <p class="mb-0">Todos os produtos têm estoque suficiente</p>
+                                </div>
+                                {% endfor %}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Desempenho dos Vendedores -->
+            <div class="row">
+                <div class="col-12">
+                    <div class="card">
+                        <div class="card-header">
+                            <h5 class="card-title mb-0">Desempenho dos Vendedores</h5>
+                        </div>
+                        <div class="card-body">
+                            <div class="table-responsive">
+                                <table class="table table-hover">
+                                    <thead>
+                                        <tr>
+                                            <th>Vendedor</th>
+                                            <th>Email</th>
+                                            <th>Vendas Realizadas</th>
+                                            <th>Status</th>
+                                            <th>Ações</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {% for vendedor in vendedores %}
+                                        <tr>
+                                            <td>{{ vendedor.nome }}</td>
+                                            <td>{{ vendedor.email }}</td>
+                                            <td>{{ vendedor.vendas_realizadas|length }}</td>
+                                            <td>
+                                                <span class="badge bg-{{ 'success' if vendedor.ativo else 'danger' }}">
+                                                    {{ 'Ativo' if vendedor.ativo else 'Inativo' }}
+                                                </span>
+                                            </td>
+                                            <td>
+                                                <div class="btn-group btn-group-sm">
+                                                    <button class="btn btn-primary" onclick="verDetalhesVendedor({{ vendedor.id }})">
+                                                        <i class='bx bx-show'></i>
+                                                    </button>
+                                                    <button class="btn btn-{{ 'danger' if vendedor.ativo else 'success' }}" 
+                                                            onclick="alterarStatusVendedor({{ vendedor.id }}, {{ 'false' if vendedor.ativo else 'true' }})">
+                                                        <i class='bx bx-power-off'></i>
+                                                    </button>
+                                                </div>
+                                            </td>
+                                        </tr>
+                                        {% endfor %}
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+function verDetalhesVendedor(vendedorId) {
+    window.location.href = `/gerente/vendedores/${vendedorId}`;
+}
+
+function alterarStatusVendedor(vendedorId, novoStatus) {
+    if (confirm('Tem certeza que deseja ' + (novoStatus ? 'ativar' : 'desativar') + ' este vendedor?')) {
+        fetch(`/gerente/vendedores/${vendedorId}/status`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({ ativo: novoStatus })
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                window.location.reload();
+            } else {
+                alert('Erro ao alterar status do vendedor');
+            }
+        });
+    }
+}
+</script>
+{% endblock %}

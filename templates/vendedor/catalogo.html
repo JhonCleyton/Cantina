@@ -1,0 +1,729 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row">
+        <!-- Catálogo -->
+        <div class="col-md-8 col-lg-9">
+            <div class="card shadow-sm mb-4">
+                <div class="card-body">
+                    <div class="d-flex flex-wrap justify-content-between align-items-center mb-4">
+                        <h1 class="h3 mb-0">Nova Venda</h1>
+                        <div class="d-flex flex-wrap gap-2">
+                            <div class="btn-group">
+                                <button class="btn btn-outline-primary active" data-grid="4">
+                                    <i class='bx bx-grid-small'></i>
+                                </button>
+                                <button class="btn btn-outline-primary" data-grid="6">
+                                    <i class='bx bx-grid'></i>
+                                </button>
+                            </div>
+                            <select class="form-select" id="filtroCategoria" style="min-width: 200px;">
+                                <option value="">Todas as categorias</option>
+                                {% for categoria in categorias %}
+                                <option value="{{ categoria.id }}">{{ categoria.nome }}</option>
+                                {% endfor %}
+                            </select>
+                            <div class="input-group" style="max-width: 300px;">
+                                <span class="input-group-text bg-transparent">
+                                    <i class='bx bx-search'></i>
+                                </span>
+                                <input type="text" class="form-control" id="buscarProduto" placeholder="Buscar produto...">
+                            </div>
+                            <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#modalQRCode">
+                                <i class='bx bx-qr-scan'></i> Ler QR Code
+                            </button>
+                        </div>
+                    </div>
+
+                    <div class="row row-cols-1 row-cols-sm-2 row-cols-md-3 row-cols-lg-4 g-3" id="listaProdutos">
+                        {% for produto in produtos %}
+                        <div class="col produto-item" data-categoria="{{ produto.categoria_id }}">
+                            <div class="produto-card card h-100">
+                                <div class="position-relative">
+                                    <img src="{{ produto.imagem }}" alt="{{ produto.nome }}" class="img-fluid">
+                                    <span class="badge bg-primary rounded-pill">
+                                        {{ produto.categoria.nome }}
+                                    </span>
+                                </div>
+                                <div class="card-body d-flex flex-column">
+                                    <h5 class="card-title text-truncate-2 mb-2">{{ produto.nome }}</h5>
+                                    <p class="card-text small text-truncate-2 text-muted mb-3">{{ produto.descricao or 'Sem descrição disponível' }}</p>
+                                    <div class="mt-auto">
+                                        <div class="d-flex justify-content-between align-items-center mb-2">
+                                            <span class="produto-preco">R$ {{ "%.2f"|format(produto.preco) }}</span>
+                                            <small class="text-muted">Estoque: {{ produto.estoque }}</small>
+                                        </div>
+                                        <button class="btn btn-primary w-100 {% if produto.estoque <= 0 %}disabled{% endif %}" 
+                                                onclick="adicionarAoCarrinho({{ produto.id }}, '{{ produto.nome }}', {{ produto.preco }}, {{ produto.estoque }})"
+                                                {% if produto.estoque <= 0 %}disabled{% endif %}>
+                                            <i class='bx bx-cart-add'></i> 
+                                            {% if produto.estoque <= 0 %}
+                                            Indisponível
+                                            {% else %}
+                                            Adicionar ao Carrinho
+                                            {% endif %}
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Carrinho -->
+        <div class="col-md-4 col-lg-3">
+            <div class="card shadow-sm sticky-top" style="top: 1rem;">
+                <div class="card-header bg-primary text-white">
+                    <h5 class="mb-0">
+                        <i class='bx bx-cart me-2'></i>Carrinho
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div id="carrinhoVazio" class="text-center py-4">
+                        <i class='bx bx-cart text-muted fs-1'></i>
+                        <p class="text-muted mb-0">Seu carrinho está vazio</p>
+                        <small class="text-muted">Adicione produtos para iniciar uma venda</small>
+                    </div>
+                    <div id="listaCarrinho" class="d-none">
+                        <div class="list-group list-group-flush mb-3" id="itensCarrinho"></div>
+                        <hr>
+                        <div class="d-flex justify-content-between align-items-center mb-3">
+                            <h6 class="mb-0">Total:</h6>
+                            <h5 class="mb-0 text-primary" id="totalCarrinho">R$ 0,00</h5>
+                        </div>
+                        
+                        <div class="d-grid gap-2">
+                            <button class="btn btn-success" onclick="escolherMetodoFinalizacao()">
+                                <i class='bx bx-check-circle me-2'></i>Finalizar Venda
+                            </button>
+                            <button class="btn btn-outline-danger" onclick="limparCarrinho()">
+                                <i class='bx bx-trash me-2'></i>Limpar Carrinho
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal Método de Finalização -->
+<div class="modal fade" id="modalMetodoFinalizacao" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Escolha o Método de Finalização</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <div class="d-grid gap-3">
+                    <button class="btn btn-lg btn-primary" onclick="iniciarLeituraQRCode()">
+                        <i class='bx bx-qr-scan'></i> Finalizar com QR Code
+                    </button>
+                    <button class="btn btn-lg btn-info" onclick="abrirSelecionarCliente()">
+                        <i class='bx bx-user'></i> Finalizar com Seleção de Cliente
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal Seleção de Clientes -->
+<div class="modal fade" id="modalSelecionarCliente" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Selecionar Cliente</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <input type="text" id="filtroCliente" class="form-control mb-3" placeholder="Buscar cliente..." oninput="filtrarClientes()">
+                <ul class="list-group" id="listaClientes">
+                    {% for cliente in clientes %}
+                    <li id="cliente-{{ cliente.id }}" class="list-group-item cliente" onclick="selecionarCliente({{ cliente.id }})">{{ cliente.nome }}</li>
+                    {% endfor %}
+                </ul>
+            </div>
+            <button id="btnFinalizarVenda" class="btn btn-success" style="display: none;" onclick="finalizarVendaSelect(document.getElementById('cliente_id').value)">
+                <i class='bx bx-check-circle me-2'></i>Finalizar Venda
+            </button>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Fechar</button>
+            </div>
+        </div>
+    </div>
+</div>
+<!-- Modal QR Code -->
+<div class="modal fade" id="modalQRCode" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Ler QR Code do Cliente</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <div class="text-center mb-3">
+                    <select id="cameras" class="form-select mb-3">
+                        <!-- Câmeras serão listadas aqui -->
+                    </select>
+                    <video id="preview" class="img-fluid"></video>
+                </div>
+                <div id="qr-result" class="alert alert-info d-none">
+                    <!-- Resultado será mostrado aqui -->
+                </div>
+                <input type="text" id="email" placeholder="Email do cliente" readonly>
+                <input type="password" id="senha" placeholder="Digite sua senha" style="display:none;">
+                <button onclick="capturarQRCode()">Capturar QR Code</button>
+                <button onclick="finalizarVendaComQRCode()">Finalizar Venda</button>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Fechar</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal Login Cliente -->
+<div class="modal fade" id="modalLoginCliente" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Login do Cliente</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <form id="formLoginCliente" onsubmit="finalizarVendaLogin(event)">
+                    <div class="mb-3">
+                        <label for="emailCliente" class="form-label">Email</label>
+                        <input type="email" class="form-control" id="emailCliente" required autocomplete="username">
+                    </div>
+                    <div class="mb-3">
+                        <label for="senhaCliente" class="form-label">Senha</label>
+                        <input type="password" id="senhaCliente" class="form-control" required autocomplete="current-password">
+                    </div>
+                    <div class="d-grid">
+                        <button type="submit" class="btn btn-primary">Confirmar Compra</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<input type="hidden" id="cliente_id" value="">
+
+<style>
+.selecionado {
+    background-color: blue; /* Cor de fundo azul */
+    color: white; /* Cor do texto branca para contraste */
+}
+</style>
+
+{% endblock %}
+
+{% block scripts %}
+<script src="https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js"></script>
+<script src="https://rawgit.com/schmich/instascan-builds/master/instascan.min.js"></script>
+<script>
+let carrinho = [];
+let scanner = null;
+
+function adicionarAoCarrinho(produtoId, nome, preco, estoque) {
+    const item = carrinho.find(i => i.id === produtoId);
+    if (item) {
+        if (item.quantidade < estoque) {
+            item.quantidade++;
+            item.subtotal = item.quantidade * item.preco;
+        } else {
+            alert('Quantidade máxima disponível em estoque atingida!');
+            return;
+        }
+    } else {
+        carrinho.push({
+            id: produtoId,
+            nome: nome,
+            preco: preco,
+            quantidade: 1,
+            subtotal: preco,
+            estoque: estoque
+        });
+    }
+    atualizarCarrinho();
+}
+
+function removerDoCarrinho(index) {
+    carrinho.splice(index, 1);
+    atualizarCarrinho();
+}
+
+function atualizarQuantidade(index, delta) {
+    const item = carrinho[index];
+    const novaQuantidade = item.quantidade + delta;
+    
+    if (novaQuantidade > 0 && novaQuantidade <= item.estoque) {
+        item.quantidade = novaQuantidade;
+        item.subtotal = item.quantidade * item.preco;
+        atualizarCarrinho();
+    }
+}
+
+function atualizarCarrinho() {
+    const carrinhoVazio = document.getElementById('carrinhoVazio');
+    const listaCarrinho = document.getElementById('listaCarrinho');
+    const itensCarrinho = document.getElementById('itensCarrinho');
+    const totalCarrinho = document.getElementById('totalCarrinho');
+
+    if (carrinho.length === 0) {
+        carrinhoVazio.classList.remove('d-none');
+        listaCarrinho.classList.add('d-none');
+        return;
+    }
+
+    carrinhoVazio.classList.add('d-none');
+    listaCarrinho.classList.remove('d-none');
+
+    // Limpa a lista atual
+    itensCarrinho.innerHTML = '';
+
+    // Adiciona os itens do carrinho
+    let total = 0;
+    carrinho.forEach((item, index) => {
+        const itemElement = document.createElement('div');
+        itemElement.className = 'carrinho-item';
+        
+        itemElement.innerHTML = `
+            <div class="produto-info">
+                <span class="produto-nome">${item.nome}</span>
+                <span class="produto-preco">R$ ${item.preco.toFixed(2)}</span>
+            </div>
+            <div class="controles">
+                <button class="btn btn-quantidade" onclick="atualizarQuantidade(${index}, -1)" ${item.quantidade <= 1 ? 'disabled' : ''}>
+                    <i class='bx bx-minus'></i>
+                </button>
+                <span class="quantidade">${item.quantidade}</span>
+                <button class="btn btn-quantidade" onclick="atualizarQuantidade(${index}, 1)" ${item.quantidade >= item.estoque ? 'disabled' : ''}>
+                    <i class='bx bx-plus'></i>
+                </button>
+                <button class="btn btn-outline-danger btn-quantidade" onclick="removerDoCarrinho(${index})">
+                    <i class='bx bx-trash'></i>
+                </button>
+            </div>
+        `;
+        
+        itensCarrinho.appendChild(itemElement);
+        total += item.preco * item.quantidade;
+    });
+
+    // Atualiza o total
+    totalCarrinho.textContent = `R$ ${total.toFixed(2)}`;
+}
+
+function limparCarrinho() {
+    if (confirm('Tem certeza que deseja limpar o carrinho?')) {
+        carrinho = [];
+        atualizarCarrinho();
+    }
+}
+
+function abrirSelecionarCliente() {
+    // Abre o modal de seleção de clientes
+    const modal = new bootstrap.Modal(document.getElementById('modalSelecionarCliente'));
+    modal.show();
+}
+
+function filtrarClientes() {
+    const filtro = document.getElementById('filtroCliente').value.toLowerCase();
+    const clientes = document.querySelectorAll('.cliente');
+    clientes.forEach(cliente => {
+        const nome = cliente.textContent.toLowerCase();
+        cliente.style.display = nome.includes(filtro) ? '' : 'none';
+    });
+}
+
+document.querySelectorAll('.cliente').forEach(item => {
+    item.addEventListener('click', function() {
+        const clienteId = this.id.replace('cliente-', '');
+        // Armazenar o ID do cliente selecionado
+        document.getElementById('cliente_id').value = clienteId;
+        // Mostrar o botão de finalização
+        document.getElementById('btnFinalizarVenda').style.display = 'block';
+        console.log('Cliente selecionado:', clienteId);
+    });
+});
+
+function finalizarVendaSelect(clienteId) {
+    console.log('Finalizar venda com o cliente:', clienteId);
+
+    // Chamar o endpoint para obter as credenciais do cliente
+    fetch(`/obter_credenciais_cliente/${clienteId}`)
+        .then(response => response.json())
+        .then(data => {
+            if (data.error) {
+                alert('Erro ao obter credenciais: ' + data.error);
+            } else {
+                const login = data.email; // Supondo que o email é o login
+                const senha = prompt("Por favor, insira sua senha:"); // Solicita a senha ao usuário
+
+                if (!senha) {
+                    alert("Senha não fornecida. A venda não pode ser finalizada.");
+                    return; // Sai da função se a senha não for fornecida
+                }
+
+                // Agora chamar a função de finalização com login e senha
+                finalizarVendaComLogin(clienteId, login, senha);
+            }
+        })
+        .catch(error => {
+            console.error('Erro ao finalizar a venda:', error);
+        });
+}
+
+function finalizarVendaComLogin(clienteId, login, senha) {
+    const dadosVenda = {
+        cliente_id: clienteId,
+        login: login,
+        senha: senha, // Envia a senha original
+        itens: carrinho  // Supondo que 'carrinho' contém os itens da venda
+    };
+
+    console.log("Dados enviados para finalizar venda:", dadosVenda); // Log dos dados
+
+    fetch('/vendedor/finalizar_venda_login', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(dadosVenda)
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.error) {
+            alert('Erro: ' + data.error);
+        } else {
+            alert('Venda finalizada com sucesso!');
+            // Limpar o carrinho ou realizar outras ações necessárias
+        }
+    })
+    .catch(error => {
+        console.error('Erro ao finalizar a venda:', error);
+    });
+}
+
+function selecionarCliente(clienteId) {
+    const clienteElements = document.querySelectorAll('.cliente');
+    clienteElements.forEach(element => {
+        element.classList.remove('selecionado');
+    });
+
+    const clienteElement = document.getElementById(`cliente-${clienteId}`);
+    clienteElement.classList.add('selecionado');
+    document.getElementById('cliente_id').value = clienteId; // Armazenar o ID do cliente selecionado
+}
+
+function escolherMetodoFinalizacao() {
+    if (carrinho.length === 0) {
+        alert('O carrinho está vazio!');
+        return;
+    }
+    new bootstrap.Modal(document.getElementById('modalMetodoFinalizacao')).show();
+}
+
+function iniciarLeituraQRCode() {
+    const modal = new bootstrap.Modal(document.getElementById('modalQRCode'));
+    modal.show();
+}
+
+function abrirLoginCliente() {
+    document.getElementById('formLoginCliente').reset();
+    new bootstrap.Modal(document.getElementById('modalLoginCliente')).show();
+    bootstrap.Modal.getInstance(document.getElementById('modalMetodoFinalizacao')).hide();
+}
+
+async function finalizarVendaQR(dadosCliente) {
+    try {
+        const response = await fetch('/vendedor/finalizar_venda_qr', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+                cliente_id: dadosCliente.id,
+                itens: carrinho.map(item => ({
+                    produto_id: item.id,
+                    quantidade: item.quantidade,
+                    preco_unitario: item.preco
+                }))
+            })
+        });
+        
+        const data = await response.json();
+        
+        if (data.error) {
+            throw new Error(data.error);
+        }
+        
+        alert('Venda realizada com sucesso!');
+        carrinho = [];
+        atualizarCarrinho();
+        
+    } catch (error) {
+        alert('Erro ao finalizar venda: ' + error.message);
+    }
+}
+
+async function finalizarVendaLogin(event) {
+    event.preventDefault();
+    
+    try {
+        const response = await fetch('/vendedor/finalizar_venda_login', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+                email: document.getElementById('emailCliente').value,
+                senha: document.getElementById('senhaCliente').value,
+                itens: carrinho.map(item => ({
+                    produto_id: item.id,
+                    quantidade: item.quantidade,
+                    preco_unitario: item.preco
+                }))
+            })
+        });
+        
+        const data = await response.json();
+        
+        if (data.error) {
+            throw new Error(data.error);
+        }
+        
+        bootstrap.Modal.getInstance(document.getElementById('modalLoginCliente')).hide();
+        alert('Venda realizada com sucesso!');
+        carrinho = [];
+        atualizarCarrinho();
+        
+    } catch (error) {
+        alert('Erro ao finalizar venda: ' + error.message);
+    }
+}
+
+// Filtros
+document.getElementById('filtroCategoria').addEventListener('change', function(e) {
+    const categoriaId = e.target.value;
+    const produtos = document.querySelectorAll('.produto-item');
+    
+    produtos.forEach(produto => {
+        if (!categoriaId || produto.dataset.categoria === categoriaId) {
+            produto.style.display = 'block';
+        } else {
+            produto.style.display = 'none';
+        }
+    });
+});
+
+document.getElementById('buscarProduto').addEventListener('input', function(e) {
+    const busca = e.target.value.toLowerCase();
+    const produtos = document.querySelectorAll('.produto-item');
+    
+    produtos.forEach(produto => {
+        const nome = produto.querySelector('.card-title').textContent.toLowerCase();
+        const descricao = produto.querySelector('.card-text').textContent.toLowerCase();
+        
+        if (nome.includes(busca) || descricao.includes(busca)) {
+            produto.style.display = 'block';
+        } else {
+            produto.style.display = 'none';
+        }
+    });
+});
+
+// Controle de Grid
+document.querySelectorAll('[data-grid]').forEach(button => {
+    button.addEventListener('click', function() {
+        const gridSize = this.dataset.grid;
+        const listaProdutos = document.getElementById('listaProdutos');
+        
+        // Remove classes antigas
+        listaProdutos.className = 'row g-3';
+        
+        // Adiciona novas classes baseadas no tamanho do grid
+        if (gridSize === '4') {
+            listaProdutos.className = 'row row-cols-1 row-cols-sm-2 row-cols-md-3 row-cols-lg-4 g-3';
+        } else {
+            listaProdutos.className = 'row row-cols-1 row-cols-sm-2 row-cols-md-3 row-cols-lg-6 g-3';
+        }
+        
+        // Atualiza estado dos botões
+        document.querySelectorAll('[data-grid]').forEach(btn => {
+            btn.classList.remove('active');
+        });
+        this.classList.add('active');
+    });
+});
+
+// Quando o modal de QR code for aberto
+document.getElementById('modalQRCode').addEventListener('show.bs.modal', async function () {
+    const qrResult = document.getElementById('qr-result');
+    qrResult.classList.add('d-none');
+    
+    try {
+        // Criar scanner
+        scanner = new Instascan.Scanner({ 
+            video: document.getElementById('preview'),
+            mirror: false
+        });
+
+        // Lidar com resultados do QR code
+        scanner.addListener('scan', async function (content) {
+            console.log('QR Code lido:', content);
+            
+            try {
+                // Decodificar os dados do cliente
+                const clienteData = JSON.parse(content);
+                console.log('Dados do cliente:', clienteData);
+                
+                // Atualizar o resultado
+                qrResult.innerHTML = `
+                    <p><strong>Cliente:</strong> ${clienteData.nome}</p>
+                    <p><strong>Email:</strong> ${clienteData.email}</p>
+                `;
+                qrResult.classList.remove('d-none');
+                
+                // Atualizar o ID do cliente
+                document.getElementById('cliente_id').value = clienteData.id;
+                
+                // Finalizar a venda
+                if (carrinho.length > 0) {
+                    const itensVenda = carrinho.map(item => ({
+                        produto_id: item.id,
+                        quantidade: item.quantidade
+                    }));
+                    
+                    const response = await fetch('/venda/finalizar', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify({
+                            cliente_id: clienteData.id,
+                            itens: itensVenda,
+                            metodo: 'qr_code'
+                        })
+                    });
+                    
+                    const result = await response.json();
+                    
+                    if (result.error) {
+                        throw new Error(result.error);
+                    }
+                    
+                    // Limpar o carrinho
+                    carrinho = [];
+                    atualizarCarrinho();
+                    
+                    // Mostrar mensagem de sucesso
+                    alert('Venda finalizada com sucesso!');
+                } else {
+                    alert('Adicione produtos ao carrinho antes de finalizar a venda');
+                }
+                
+                // Parar o scanner e fechar o modal
+                if (scanner) {
+                    scanner.stop();
+                }
+                const modal = bootstrap.Modal.getInstance(document.getElementById('modalQRCode'));
+                modal.hide();
+                
+            } catch (error) {
+                console.error('Erro ao processar QR code:', error);
+                qrResult.innerHTML = `<div class="alert alert-danger">Erro: ${error.message}</div>`;
+                qrResult.classList.remove('d-none');
+            }
+        });
+
+        // Obter câmeras disponíveis
+        const cameras = await Instascan.Camera.getCameras();
+        console.log('Câmeras disponíveis:', cameras);
+        
+        if (cameras.length > 0) {
+            // Preencher select de câmeras
+            const select = document.getElementById('cameras');
+            select.innerHTML = '';
+            
+            cameras.forEach((camera, index) => {
+                const option = document.createElement('option');
+                option.value = index;
+                option.text = `Câmera ${index + 1}${camera.name ? ` (${camera.name})` : ''}`;
+                select.appendChild(option);
+            });
+            
+            // Tentar usar a câmera traseira primeiro
+            const backCamera = cameras.find(camera => camera.name && camera.name.toLowerCase().includes('back'));
+            const cameraToUse = backCamera || cameras[0];
+            
+            // Iniciar com a câmera selecionada
+            await scanner.start(cameraToUse);
+            
+            // Mudar câmera quando selecionada
+            select.onchange = async () => {
+                await scanner.stop();
+                await scanner.start(cameras[select.value]);
+            };
+        } else {
+            alert('Nenhuma câmera encontrada');
+        }
+        
+    } catch (error) {
+        console.error('Erro ao iniciar scanner:', error);
+        qrResult.innerHTML = `<div class="alert alert-danger">Erro ao iniciar câmera: ${error.message}</div>`;
+        qrResult.classList.remove('d-none');
+    }
+});
+
+// Quando o modal de QR code for fechado
+document.getElementById('modalQRCode').addEventListener('hide.bs.modal', function () {
+    if (scanner) {
+        scanner.stop();
+    }
+});
+
+function capturarQRCode() {
+    // Lógica para capturar o QR Code
+    const emailCapturado = "jhonfreire@cantina.com"; // Exemplo de email capturado
+    document.getElementById('email').value = emailCapturado;
+}
+
+function finalizarVendaComQRCode() {
+    const email = document.getElementById('email').value;
+    const senha = '123456'; // Senha padrão
+
+    // Enviar dados para validação
+    fetch('/vendedor/validar_login', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ email: email, senha: senha })
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.error) {
+            // Se a senha estiver incorreta, exibir campo para nova senha
+            alert('Senha incorreta. Por favor, insira a senha correta.');
+            document.getElementById('senha').style.display = 'block';
+        } else {
+            // Se os dados forem válidos, chamar a função de finalização
+            finalizarVendaComLogin(clienteId); // Passar o cliente ID conforme necessário
+        }
+    })
+    .catch(error => {
+        console.error('Erro ao validar login:', error);
+    });
+}
+</script>
+{% endblock %}

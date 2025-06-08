@@ -1,0 +1,80 @@
+{% include 'base.html' %}
+
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Produtos da Loja</title>
+    <link rel="stylesheet" href="/static/css/styles.css">
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f4f4f4;
+            margin: 0;
+            padding: 20px;
+        }
+        .container {
+            max-width: 1200px;
+            margin: auto;
+            padding: 20px;
+            background: white;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+        }
+        .produtos {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+            gap: 20px;
+        }
+        .produto-card {
+            background: #fff;
+            border-radius: 8px;
+            padding: 15px;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+            text-align: center;
+        }
+        .produto-card img {
+            max-width: 100%;
+            height: auto;
+            border-radius: 8px;
+        }
+        .produto-card h2 {
+            font-size: 1.5em;
+            margin: 10px 0;
+        }
+        .produto-card p {
+            margin: 5px 0;
+        }
+        .filtro-categorias {
+            margin-bottom: 20px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Produtos da Loja</h1>
+        <div class="filtro-categorias">
+            <form method="GET" action="{{ url_for('ver_produtos', loja_id=loja.id) }}">
+                <label for="categoria">Filtrar por Categoria:</label>
+                <select name="categoria_id" id="categoria" onchange="this.form.submit()">
+                    <option value="" {% if not categoria_id %}selected{% endif %}>Todas</option>
+                    {% for categoria in categorias %}
+                        <option value="{{ categoria.id }}" {% if categoria.id == categoria_id %}selected{% endif %}>{{ categoria.nome }}</option>
+                    {% endfor %}
+                </select>
+            </form>
+        </div>
+        <div class="produtos">
+            {% for produto in produtos %}
+                <div class="produto-card">
+                    <img src="{{ produto.imagem }}" alt="{{ produto.nome }}">
+                    <h2>{{ produto.nome }}</h2>
+                    <p>{{ produto.descricao }}</p>
+                    <p>Preço: R$ {{ produto.preco }}</p>
+                </div>
+            {% endfor %}
+        </div>
+    </div>
+</body>
+</html>

@@ -1,0 +1,290 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-12">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <div>
+                    <h1 class="h3 mb-0">Produtos - {{ loja.nome }}</h1>
+                    <p class="text-muted mb-0">Gerenciamento de produtos da loja</p>
+                </div>
+                <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#modalNovoProduto">
+                    <i class='bx bx-plus-circle'></i> Novo Produto
+                </button>
+            </div>
+
+            <!-- Filtros -->
+            <div class="card mb-4">
+                <div class="card-body">
+                    <div class="row g-3">
+                        <div class="col-md-4">
+                            <input type="text" class="form-control" id="filtroNome" placeholder="Buscar por nome...">
+                        </div>
+                        <div class="col-md-3">
+                            <select class="form-select" id="filtroCategoria">
+                                <option value="">Todas as categorias</option>
+                                {% for categoria in categorias %}
+                                <option value="{{ categoria.id }}">{{ categoria.nome }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div class="col-md-3">
+                            <select class="form-select" id="filtroEstoque">
+                                <option value="">Status de estoque</option>
+                                <option value="baixo">Estoque baixo</option>
+                                <option value="normal">Estoque normal</option>
+                                <option value="zero">Sem estoque</option>
+                            </select>
+                        </div>
+                        <div class="col-md-2">
+                            <button class="btn btn-secondary w-100" onclick="aplicarFiltros()">
+                                <i class='bx bx-filter-alt'></i> Filtrar
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Lista de Produtos -->
+            <div class="row" id="listaProdutos">
+                {% for produto in produtos %}
+                <div class="col-md-6 col-lg-4 mb-4 produto-card" 
+                     data-categoria="{{ produto.categoria_id }}"
+                     data-estoque="{{ produto.estoque }}">
+                    <div class="card h-100">
+                        <div class="produto-imagem">
+                            <img src="{{ produto.imagem }}" alt="{{ produto.nome }}" class="img-fluid">
+                        </div>
+                        <div class="card-body">
+                            <div class="d-flex justify-content-between align-items-start mb-2">
+                                <h5 class="card-title mb-0">{{ produto.nome }}</h5>
+                                <span class="badge bg-{{ 'success' if produto.ativo else 'danger' }}">
+                                    {{ 'Ativo' if produto.ativo else 'Inativo' }}
+                                </span>
+                            </div>
+                            <p class="card-text text-muted small mb-3">{{ produto.descricao }}</p>
+                            <div class="d-flex justify-content-between align-items-center mb-3">
+                                <span class="badge bg-primary">{{ produto.categoria.nome }}</span>
+                                <h5 class="mb-0 text-success">R$ {{ "%.2f"|format(produto.preco) }}</h5>
+                            </div>
+                            <div class="progress mb-3" style="height: 5px;">
+                                {% set estoque_percentual = (produto.estoque / 100) * 100 %}
+                                {% set estoque_cor = 'success' if estoque_percentual > 50 else 'warning' if estoque_percentual > 20 else 'danger' %}
+                                <div class="progress-bar bg-{{ estoque_cor }}" 
+                                     role="progressbar" 
+                                     style="width: {{ estoque_percentual }}%" 
+                                     aria-valuenow="{{ produto.estoque }}" 
+                                     aria-valuemin="0" 
+                                     aria-valuemax="100">
+                                </div>
+                            </div>
+                            <div class="d-flex justify-content-between align-items-center small text-muted mb-3">
+                                <span>Estoque: {{ produto.estoque }} unidades</span>
+                                <span>Vendidos: {{ produto.itens_venda|length }}</span>
+                            </div>
+                            <div class="d-flex gap-2">
+                                <button class="btn btn-primary flex-grow-1" 
+                                        onclick="editarProduto({{ produto.id }})">
+                                    <i class='bx bx-edit'></i> Editar
+                                </button>
+                                <button class="btn btn-{{ 'danger' if produto.ativo else 'success' }}"
+                                        onclick="alterarStatusProduto({{ produto.id }}, {{ 'false' if produto.ativo else 'true' }})">
+                                    <i class='bx bx-power-off'></i>
+                                </button>
+                                <button class="btn btn-danger" onclick="excluirProduto({{ produto.id }})">
+                                    <i class='bx bx-trash'></i> Excluir
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal Novo Produto -->
+<div class="modal fade" id="modalNovoProduto" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Novo Produto</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <form action="{{ url_for('novo_produto') }}" method="POST" enctype="multipart/form-data">
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label for="nome" class="form-label">Nome do Produto</label>
+                        <input type="text" class="form-control" id="nome" name="nome" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="descricao" class="form-label">Descrição</label>
+                        <textarea class="form-control" id="descricao" name="descricao" rows="3" required></textarea>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label for="preco" class="form-label">Preço</label>
+                            <div class="input-group">
+                                <span class="input-group-text">R$</span>
+                                <input type="text" class="form-control" id="preco" name="preco" required>
+                            </div>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label for="quantidade" class="form-label">Quantidade</label>
+                            <input type="number" class="form-control" id="quantidade" name="quantidade" min="0" required>
+                        </div>
+                    </div>
+                    <div class="mb-3">
+                        <label for="categoria" class="form-label">Categoria</label>
+                        <select class="form-select" id="categoria" name="categoria" required>
+                            <option value="">Selecione...</option>
+                            {% for categoria in categorias %}
+                            <option value="{{ categoria.id }}">{{ categoria.nome }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Imagem do Produto</label>
+                        <div class="mb-2">
+                            <div class="form-check form-check-inline">
+                                <input class="form-check-input" type="radio" name="tipo_imagem" id="tipo_upload" value="upload" checked>
+                                <label class="form-check-label" for="tipo_upload">Upload de Arquivo</label>
+                            </div>
+                            <div class="form-check form-check-inline">
+                                <input class="form-check-input" type="radio" name="tipo_imagem" id="tipo_url" value="url">
+                                <label class="form-check-label" for="tipo_url">URL da Imagem</label>
+                            </div>
+                        </div>
+                        <div id="upload_section">
+                            <input type="file" class="form-control" id="imagem" name="imagem" accept=".jpg,.jpeg,.png">
+                            <small class="text-muted">Formatos aceitos: JPG, JPEG, PNG</small>
+                        </div>
+                        <div id="url_section" style="display: none;">
+                            <input type="url" class="form-control" id="imagem_url" name="imagem_url" placeholder="https://exemplo.com/imagem.jpg">
+                            <small class="text-muted">Insira a URL completa da imagem</small>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="submit" class="btn btn-primary">Cadastrar</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Script para alternar entre upload e URL -->
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const tipoUpload = document.getElementById('tipo_upload');
+    const tipoUrl = document.getElementById('tipo_url');
+    const uploadSection = document.getElementById('upload_section');
+    const urlSection = document.getElementById('url_section');
+    
+    function toggleImagemSections() {
+        if (tipoUpload.checked) {
+            uploadSection.style.display = 'block';
+            urlSection.style.display = 'none';
+            document.getElementById('imagem_url').value = '';
+        } else {
+            uploadSection.style.display = 'none';
+            urlSection.style.display = 'block';
+            document.getElementById('imagem').value = '';
+        }
+    }
+    
+    tipoUpload.addEventListener('change', toggleImagemSections);
+    tipoUrl.addEventListener('change', toggleImagemSections);
+});
+</script>
+
+{% endblock %}
+
+{% block scripts %}
+<script>
+function editarProduto(produtoId) {
+    window.location.href = `/gerente/produtos/${produtoId}/editar`;
+}
+
+function alterarStatusProduto(produtoId, novoStatus) {
+    if (confirm('Tem certeza que deseja ' + (novoStatus ? 'ativar' : 'desativar') + ' este produto?')) {
+        fetch(`/gerente/produtos/${produtoId}/status`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({ ativo: novoStatus })
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                window.location.reload();
+            } else {
+                alert('Erro ao alterar status do produto');
+            }
+        });
+    }
+}
+
+function excluirProduto(produtoId) {
+    if (confirm('Tem certeza que deseja excluir este produto?')) {
+        fetch(`/gerente/produtos/${produtoId}/excluir`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            }
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                window.location.reload();
+            } else {
+                alert('Erro ao excluir produto');
+            }
+        });
+    }
+}
+
+function aplicarFiltros() {
+    const nome = document.getElementById('filtroNome').value.toLowerCase();
+    const categoria = document.getElementById('filtroCategoria').value;
+    const estoque = document.getElementById('filtroEstoque').value;
+    
+    document.querySelectorAll('.produto-card').forEach(card => {
+        let mostrar = true;
+        
+        // Filtro por nome
+        if (nome) {
+            const nomeProduto = card.querySelector('.card-title').textContent.toLowerCase();
+            if (!nomeProduto.includes(nome)) mostrar = false;
+        }
+        
+        // Filtro por categoria
+        if (categoria && card.dataset.categoria !== categoria) {
+            mostrar = false;
+        }
+        
+        // Filtro por estoque
+        if (estoque) {
+            const qtdEstoque = parseInt(card.dataset.estoque);
+            switch(estoque) {
+                case 'baixo':
+                    if (qtdEstoque > 10) mostrar = false;
+                    break;
+                case 'normal':
+                    if (qtdEstoque <= 10) mostrar = false;
+                    break;
+                case 'zero':
+                    if (qtdEstoque > 0) mostrar = false;
+                    break;
+            }
+        }
+        
+        card.style.display = mostrar ? '' : 'none';
+    });
+}
+</script>
+{% endblock %}

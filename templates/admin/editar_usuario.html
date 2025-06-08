@@ -1,0 +1,56 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="container mt-4">
+    <h2>Editar Usuário</h2>
+    
+    <div class="card">
+        <div class="card-header">
+            <h4>Editar {{ usuario.nome }}</h4>
+        </div>
+        <div class="card-body">
+            <form action="{{ url_for('editar_usuario', id=usuario.id) }}" method="POST">
+                <div class="row">
+                    <div class="col-md-6">
+                        <div class="mb-3">
+                            <label for="nome" class="form-label">Nome</label>
+                            <input type="text" class="form-control" id="nome" name="nome" value="{{ usuario.nome }}" required>
+                        </div>
+                        <div class="mb-3">
+                            <label for="email" class="form-label">Email</label>
+                            <input type="email" class="form-control" id="email" name="email" value="{{ usuario.email }}" required>
+                        </div>
+                        <div class="mb-3">
+                            <label for="password" class="form-label">Nova Senha (deixe em branco para manter a atual)</label>
+                            <input type="password" class="form-control" id="password" name="password">
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="mb-3">
+                            <label for="tipo" class="form-label">Tipo de Usuário</label>
+                            <select class="form-select" id="tipo" name="tipo" required>
+                                <option value="cliente" {% if usuario.tipo == 'cliente' %}selected{% endif %}>Cliente</option>
+                                <option value="vendedor" {% if usuario.tipo == 'vendedor' %}selected{% endif %}>Vendedor</option>
+                                <option value="gerente" {% if usuario.tipo == 'gerente' %}selected{% endif %}>Gerente</option>
+                                <option value="admin" {% if usuario.tipo == 'admin' %}selected{% endif %}>Administrador</option>
+                            </select>
+                        </div>
+                        <div class="mb-3">
+                            <label for="cpf" class="form-label">CPF</label>
+                            <input type="text" class="form-control" id="cpf" name="cpf" value="{{ usuario.cpf }}">
+                        </div>
+                        <div class="mb-3">
+                            <label for="matricula" class="form-label">Matrícula</label>
+                            <input type="text" class="form-control" id="matricula" name="matricula" value="{{ usuario.matricula }}">
+                        </div>
+                    </div>
+                </div>
+                <div class="mt-3">
+                    <button type="submit" class="btn btn-primary">Salvar Alterações</button>
+                    <a href="{{ url_for('gerenciar_usuarios') }}" class="btn btn-secondary">Cancelar</a>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}

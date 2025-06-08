@@ -1,0 +1,126 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-12 col-lg-8 mx-auto">
+            <div class="card">
+                <div class="card-header">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <h5 class="mb-0">Editar Loja</h5>
+                        <a href="{{ url_for('gerenciar_lojas') }}" class="btn btn-secondary btn-sm">
+                            <i class='bx bx-arrow-back'></i> Voltar
+                        </a>
+                    </div>
+                </div>
+                <div class="card-body">
+                    <form action="{{ url_for('editar_loja', id=loja.id) }}" method="POST">
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label for="nome" class="form-label">Nome da Loja</label>
+                                <input type="text" class="form-control" id="nome" name="nome" value="{{ loja.nome }}" required>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label for="gerente_id" class="form-label">Gerente</label>
+                                <select class="form-select" id="gerente_id" name="gerente_id">
+                                    <option value="">Selecione um gerente</option>
+                                    {% for gerente in gerentes %}
+                                    <option value="{{ gerente.id }}" {{ 'selected' if loja.gerente_id == gerente.id }}>
+                                        {{ gerente.nome }} ({{ gerente.email }})
+                                    </option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="descricao" class="form-label">Descrição</label>
+                            <textarea class="form-control" id="descricao" name="descricao" rows="3">{{ loja.descricao }}</textarea>
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="endereco" class="form-label">Endereço</label>
+                            <input type="text" class="form-control" id="endereco" name="endereco" value="{{ loja.endereco }}" required>
+                        </div>
+
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label for="telefone" class="form-label">Telefone</label>
+                                <input type="tel" class="form-control" id="telefone" name="telefone" value="{{ loja.telefone }}">
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label for="email" class="form-label">Email</label>
+                                <input type="email" class="form-control" id="email" name="email" value="{{ loja.email }}">
+                            </div>
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="logo_url" class="form-label">URL do Logo</label>
+                            <input type="url" class="form-control" id="logo_url" name="logo_url" value="{{ loja.logo_url }}">
+                        </div>
+
+                        <hr>
+
+                        <div class="row mb-4">
+                            <div class="col-md-4">
+                                <div class="card bg-light">
+                                    <div class="card-body text-center">
+                                        <h6 class="card-title">Produtos</h6>
+                                        <h3 class="mb-0">{{ loja.produtos|length }}</h3>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <div class="card bg-light">
+                                    <div class="card-body text-center">
+                                        <h6 class="card-title">Vendedores</h6>
+                                        <h3 class="mb-0">{{ loja.funcionarios|length }}</h3>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <div class="card bg-light">
+                                    <div class="card-body text-center">
+                                        <h6 class="card-title">Vendas</h6>
+                                        <h3 class="mb-0">{{ loja.vendas|length }}</h3>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="d-flex justify-content-between">
+                            <button type="button" class="btn btn-danger" onclick="confirmarExclusao()">
+                                <i class='bx bx-trash'></i> Excluir Loja
+                            </button>
+                            <div>
+                                <a href="{{ url_for('gerenciar_lojas') }}" class="btn btn-secondary me-2">Cancelar</a>
+                                <button type="submit" class="btn btn-primary">Salvar Alterações</button>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+function confirmarExclusao() {
+    if (confirm('Tem certeza que deseja excluir esta loja? Esta ação não pode ser desfeita.')) {
+        fetch(`/admin/lojas/{{ loja.id }}/excluir`, {
+            method: 'POST',
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                window.location.href = "{{ url_for('gerenciar_lojas') }}";
+            } else {
+                alert('Erro ao excluir loja: ' + data.message);
+            }
+        });
+    }
+}
+</script>
+{% endblock %}

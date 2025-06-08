@@ -1,0 +1,73 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="container mt-4">
+    <h2>Atribuir Loja a Gerente</h2>
+    
+    <div class="card">
+        <div class="card-body">
+            <form method="POST">
+                <div class="form-group">
+                    <label for="gerente_id">Selecione o Gerente:</label>
+                    <select class="form-control" id="gerente_id" name="gerente_id" required>
+                        <option value="">Selecione um gerente</option>
+                        {% for gerente in gerentes %}
+                            <option value="{{ gerente.id }}">{{ gerente.nome }} ({{ gerente.email }})</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                
+                <div class="form-group mt-3">
+                    <label for="loja_id">Selecione a Loja:</label>
+                    <select class="form-control" id="loja_id" name="loja_id" required>
+                        <option value="">Selecione uma loja</option>
+                        {% for loja in lojas %}
+                            <option value="{{ loja.id }}">{{ loja.nome }} ({{ loja.cnpj }})</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                
+                <button type="submit" class="btn btn-primary mt-3">Atribuir Loja</button>
+                <a href="{{ url_for('admin_dashboard') }}" class="btn btn-secondary mt-3">Voltar</a>
+            </form>
+        </div>
+    </div>
+    
+    <!-- Lista de Gerentes com Loja Atribuída -->
+    <div class="card mt-4">
+        <div class="card-header">
+            <h5>Gerentes com Loja Atribuída</h5>
+        </div>
+        <div class="card-body">
+            <div class="table-responsive">
+                <table class="table table-striped">
+                    <thead>
+                        <tr>
+                            <th>Gerente</th>
+                            <th>E-mail</th>
+                            <th>Loja</th>
+                            <th>CNPJ</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% if gerentes_lojas %}
+                            {% for gerente in gerentes_lojas %}
+                            <tr>
+                                <td>{{ gerente.nome }}</td>
+                                <td>{{ gerente.email }}</td>
+                                <td>{{ gerente.loja_nome }}</td>
+                                <td>{{ gerente.loja_cnpj }}</td>
+                            </tr>
+                            {% endfor %}
+                        {% else %}
+                            <tr>
+                                <td colspan="4" class="text-center">Nenhum gerente com loja atribuída</td>
+                            </tr>
+                        {% endif %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

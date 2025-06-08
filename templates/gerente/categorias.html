@@ -1,0 +1,107 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="container-fluid py-4">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2 class="mb-0">Categorias</h2>
+        <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#modalNovaCategoria">
+            <i class="bx bx-plus me-1"></i>Nova Categoria
+        </button>
+    </div>
+
+    <!-- Lista de Categorias -->
+    <div class="row row-cols-1 row-cols-md-2 row-cols-lg-3 g-4">
+        {% for categoria in categorias %}
+        <div class="col">
+            <div class="card h-100">
+                <div class="card-body">
+                    <h5 class="card-title">{{ categoria.nome }}</h5>
+                    <img src="{{ categoria.imageUrl }}" alt="Imagem da Categoria" style="width: 100%; height: auto; display: block; margin: 0 auto;">
+                    <p class="card-text">{{ categoria.descricao }}</p>
+                </div>
+                <div class="card-footer bg-transparent">
+                    <button class="btn btn-sm btn-outline-primary" onclick="editarCategoria({{ categoria.id }})">
+                        <i class="bx bx-edit-alt me-1"></i>Editar
+                    </button>
+                    <button class="btn btn-sm btn-outline-danger" onclick="excluirCategoria({{ categoria.id }})">
+                        <i class="bx bx-trash me-1"></i>Excluir
+                    </button>
+                </div>
+            </div>
+        </div>
+        {% else %}
+        <div class="col-12">
+            <div class="alert alert-info" role="alert">
+                <i class="bx bx-info-circle me-2"></i>
+                Nenhuma categoria cadastrada. Clique em "Nova Categoria" para começar.
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+
+    <!-- Modal Nova Categoria -->
+    <div class="modal fade" id="modalNovaCategoria" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Nova Categoria</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <form id="categoryForm">
+                    <div class="modal-body">
+                        <div class="mb-3">
+                            <label for="nome" class="form-label">Nome da Categoria</label>
+                            <input type="text" class="form-control" id="nome" name="nome" required>
+                        </div>
+                        <div class="mb-3">
+                            <label for="descricao" class="form-label">Descrição</label>
+                            <textarea class="form-control" id="descricao" name="descricao" rows="3" required></textarea>
+                        </div>
+                        <div class="mb-3">
+                            <label for="imageUrl" class="form-label">URL da Imagem</label>
+                            <input type="text" class="form-control" id="imageUrl" placeholder="Enter image URL" required>
+                            <div id="feedback" style="color: red;"></div>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                        <button type="submit" class="btn btn-primary">Criar Categoria</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Script para manipulação das categorias -->
+<script>
+function editarCategoria(id) {
+    // TODO: Implementar edição de categoria
+    alert('Funcionalidade em desenvolvimento');
+}
+
+function excluirCategoria(id) {
+    if (confirm('Tem certeza que deseja excluir esta categoria?')) {
+        // TODO: Implementar exclusão de categoria
+        alert('Funcionalidade em desenvolvimento');
+    }
+}
+
+document.getElementById('categoryForm').addEventListener('submit', function(event) {
+    event.preventDefault();
+    const url = document.getElementById('imageUrl').value;
+    const feedback = document.getElementById('feedback');
+    feedback.textContent = '';
+
+    // Validate URL
+    const pattern = /^(https?:\/\/.*\.(?:png|jpg|jpeg|gif|bmp|webp))$/;
+    if (!pattern.test(url)) {
+        feedback.textContent = 'Please enter a valid image URL.';
+        return;
+    }
+
+    // Proceed with form submission or image handling
+    // ... (your existing logic)
+});
+</script>
+{% endblock %}

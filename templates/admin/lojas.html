@@ -1,0 +1,138 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-12">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <h1 class="h3 mb-0">Gerenciar Lojas</h1>
+                <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#modalNovaLoja">
+                    <i class="fas fa-plus-circle"></i> Nova Loja
+                </button>
+            </div>
+
+            <div class="row">
+                {% for loja in lojas %}
+                <div class="col-md-6 col-lg-4 mb-4">
+                    <div class="card h-100">
+                        <div class="card-body">
+                            <div class="d-flex justify-content-between align-items-start mb-3">
+                                <div>
+                                    <h5 class="card-title">{{ loja.nome }}</h5>
+                                    <p class="card-text">
+                                        <small class="text-muted">
+                                            <i class="fas fa-map-marker-alt"></i> {{ loja.endereco }}
+                                        </small>
+                                    </p>
+                                    <p class="card-text">
+                                        <small class="text-muted">
+                                            <i class="fas fa-phone"></i> {{ loja.telefone }}
+                                            <br>
+                                            <i class="fas fa-id-card"></i> {{ loja.cnpj }}
+                                        </small>
+                                    </p>
+                                </div>
+                                <span class="badge bg-{{ 'success' if loja.ativo else 'danger' }}">
+                                    {{ 'Ativa' if loja.ativo else 'Inativa' }}
+                                </span>
+                            </div>
+                            
+                            <div class="row g-2 mb-3">
+                                <div class="col-4">
+                                    <div class="p-2 border rounded text-center">
+                                        <div class="h4 mb-0">{{ loja.produtos_count }}</div>
+                                        <small class="text-muted">Produtos</small>
+                                    </div>
+                                </div>
+                                <div class="col-4">
+                                    <div class="p-2 border rounded text-center">
+                                        <div class="h4 mb-0">{{ loja.vendedores_count }}</div>
+                                        <small class="text-muted">Vendedores</small>
+                                    </div>
+                                </div>
+                                <div class="col-4">
+                                    <div class="p-2 border rounded text-center">
+                                        <div class="h4 mb-0">{{ loja.vendas_count }}</div>
+                                        <small class="text-muted">Vendas</small>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="d-flex gap-2">
+                                <a href="{{ url_for('editar_loja', id=loja.id) }}" class="btn btn-primary flex-grow-1">
+                                    <i class="fas fa-edit"></i> Editar
+                                </a>
+                                <button class="btn btn-{{ 'danger' if loja.ativo else 'success' }}" 
+                                        onclick="alterarStatusLoja({{ loja.id }}, {{ 'false' if loja.ativo else 'true' }})">
+                                    <i class="fas fa-power-off"></i>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal Nova Loja -->
+<div class="modal fade" id="modalNovaLoja" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Nova Loja</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <form action="{{ url_for('nova_loja') }}" method="POST">
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label for="nome" class="form-label">Nome da Loja</label>
+                        <input type="text" class="form-control" id="nome" name="nome" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="endereco" class="form-label">Endereço</label>
+                        <input type="text" class="form-control" id="endereco" name="endereco" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="telefone" class="form-label">Telefone</label>
+                        <input type="tel" class="form-control" id="telefone" name="telefone">
+                    </div>
+                    <div class="mb-3">
+                        <label for="cnpj" class="form-label">CNPJ</label>
+                        <input type="text" class="form-control" id="cnpj" name="cnpj" required>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="submit" class="btn btn-primary">Criar Loja</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+function alterarStatusLoja(lojaId, novoStatus) {
+    if (confirm('Tem certeza que deseja ' + (novoStatus ? 'ativar' : 'desativar') + ' esta loja?')) {
+        fetch(`/admin/lojas/${lojaId}/status`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({ ativo: novoStatus })
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                window.location.reload();
+            } else {
+                alert('Erro ao alterar status da loja');
+            }
+        });
+    }
+}
+</script>
+{% endblock %}

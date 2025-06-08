@@ -1,0 +1,232 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="container mt-4">
+    <h2>Realizar Venda</h2>
+    
+    <!-- Carrinho de Compras -->
+    <div class="card mb-4">
+        <div class="card-header">
+            <h4>Carrinho</h4>
+        </div>
+        <div class="card-body">
+            <div class="table-responsive">
+                <table class="table" id="carrinho-table">
+                    <thead>
+                        <tr>
+                            <th>Produto</th>
+                            <th>Quantidade</th>
+                            <th>Preço Unit.</th>
+                            <th>Subtotal</th>
+                            <th>Ações</th>
+                        </tr>
+                    </thead>
+                    <tbody id="carrinho-items">
+                        <!-- Items serão adicionados aqui via JavaScript -->
+                    </tbody>
+                    <tfoot>
+                        <tr>
+                            <td colspan="3" class="text-end"><strong>Total:</strong></td>
+                            <td><span id="total-valor">R$ 0,00</span></td>
+                            <td></td>
+                        </tr>
+                    </tfoot>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- Botões de Finalização -->
+    <div class="row mb-4">
+        <div class="col-md-6">
+            <button class="btn btn-primary btn-lg w-100" data-bs-toggle="modal" data-bs-target="#qrCodeModal">
+                <i class="fas fa-qrcode me-2"></i>Finalizar com QR Code
+            </button>
+        </div>
+        <div class="col-md-6">
+            <button class="btn btn-success btn-lg w-100" data-bs-toggle="modal" data-bs-target="#loginModal">
+                <i class="fas fa-sign-in-alt me-2"></i>Finalizar com Login
+            </button>
+        </div>
+    </div>
+
+    <!-- Modal QR Code -->
+    <div class="modal fade" id="qrCodeModal" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Leitura do QR Code</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body text-center">
+                    <div id="qr-reader"></div>
+                    <div id="qr-reader-results"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal Login -->
+    <div class="modal fade" id="loginModal" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Login do Cliente</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <form id="login-form">
+                        <div class="mb-3">
+                            <label for="email" class="form-label">Email</label>
+                            <input type="email" class="form-control" id="email" required>
+                        </div>
+                        <div class="mb-3">
+                            <label for="senha" class="form-label">Senha</label>
+                            <input type="password" class="form-control" id="senha" required>
+                        </div>
+                        <button type="submit" class="btn btn-primary w-100">Finalizar Venda</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script src="https://unpkg.com/html5-qrcode"></script>
+<script>
+let carrinho = [];
+let qrScanner = null;
+
+function formatarMoeda(valor) {
+    return new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(valor);
+}
+
+function atualizarCarrinho() {
+    const tbody = document.getElementById('carrinho-items');
+    const totalSpan = document.getElementById('total-valor');
+    let total = 0;
+    
+    tbody.innerHTML = '';
+    carrinho.forEach((item, index) => {
+        const tr = document.createElement('tr');
+        tr.innerHTML = `
+            <td>${item.nome}</td>
+            <td>${item.quantidade}</td>
+            <td>${formatarMoeda(item.preco)}</td>
+            <td>${formatarMoeda(item.preco * item.quantidade)}</td>
+            <td>
+                <button class="btn btn-danger btn-sm" onclick="removerItem(${index})">
+                    <i class="fas fa-trash"></i>
+                </button>
+            </td>
+        `;
+        tbody.appendChild(tr);
+        total += item.preco * item.quantidade;
+    });
+    
+    totalSpan.textContent = formatarMoeda(total);
+}
+
+function removerItem(index) {
+    carrinho.splice(index, 1);
+    atualizarCarrinho();
+}
+
+function iniciarLeitorQR() {
+    const html5QrcodeScanner = new Html5QrcodeScanner(
+        "qr-reader", { fps: 10, qrbox: 250 }
+    );
+    
+    html5QrcodeScanner.render((decodedText) => {
+        finalizarVendaQR(decodedText);
+        html5QrcodeScanner.clear();
+        $('#qrCodeModal').modal('hide');
+    });
+    
+    qrScanner = html5QrcodeScanner;
+}
+
+function finalizarVendaQR(qrCodeData) {
+    const itens = carrinho.map(item => ({
+        produto_id: item.id,
+        quantidade: item.quantidade
+    }));
+    
+    fetch('/vendedor/finalizar_venda_qr', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+            qr_code_data: qrCodeData,
+            itens: itens
+        })
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.error) {
+            alert(data.error);
+        } else {
+            alert('Venda realizada com sucesso!');
+            carrinho = [];
+            atualizarCarrinho();
+        }
+    })
+    .catch(error => {
+        alert('Erro ao processar venda: ' + error);
+    });
+}
+
+function finalizarVendaLogin(event) {
+    event.preventDefault();
+    
+    const email = document.getElementById('email').value;
+    const senha = document.getElementById('senha').value;
+    const itens = carrinho.map(item => ({
+        produto_id: item.id,
+        quantidade: item.quantidade
+    }));
+    
+    fetch('/vendedor/finalizar_venda_login', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+            email: email,
+            senha: senha,
+            itens: itens
+        })
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.error) {
+            alert(data.error);
+        } else {
+            alert('Venda realizada com sucesso!');
+            carrinho = [];
+            atualizarCarrinho();
+            $('#loginModal').modal('hide');
+        }
+    })
+    .catch(error => {
+        alert('Erro ao processar venda: ' + error);
+    });
+}
+
+// Event Listeners
+document.getElementById('login-form').addEventListener('submit', finalizarVendaLogin);
+
+$('#qrCodeModal').on('shown.bs.modal', function () {
+    iniciarLeitorQR();
+});
+
+$('#qrCodeModal').on('hidden.bs.modal', function () {
+    if (qrScanner) {
+        qrScanner.clear();
+    }
+});
+</script>
+{% endblock %}

@@ -1,0 +1,210 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="row">
+        <!-- Saldo e Estatísticas -->
+        <div class="col-md-4">
+            <div class="card mb-4">
+                <div class="card-body">
+                    <h5 class="card-title">Saldo Atual</h5>
+                    <h2 class="text-primary">R$ {{ "%.2f"|format(current_user.saldo) }}</h2>
+                </div>
+            </div>
+            
+            <div class="card mb-4">
+                <div class="card-body">
+                    <h5 class="card-title">Estatísticas</h5>
+                    <div class="d-flex justify-content-between mb-2">
+                        <span>Total de Compras:</span>
+                        <strong>{{ total_compras }}</strong>
+                    </div>
+                    <div class="d-flex justify-content-between mb-2">
+                        <span>Valor Total:</span>
+                        <strong>R$ {{ "%.2f"|format(valor_total_compras) }}</strong>
+                    </div>
+                    <div class="d-flex justify-content-between">
+                        <span>Compras este mês:</span>
+                        <strong>{{ compras_mes }}</strong>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Últimas Compras -->
+        <div class="col-md-8">
+            <div class="card mb-4">
+                <div class="card-body">
+                    <h5 class="card-title">Últimas Compras</h5>
+                    <div class="table-responsive">
+                        <table class="table">
+                            <thead>
+                                <tr>
+                                    <th>Data</th>
+                                    <th>Loja</th>
+                                    <th>Valor</th>
+                                    <th>Status</th>
+                                    <th>Ações</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for compra in compras %}
+                                <tr>
+                                    <td>{{ compra.data_venda.strftime('%d/%m/%Y %H:%M') }}</td>
+                                    <td>{{ compra.loja.nome }}</td>
+                                    <td>R$ {{ "%.2f"|format(compra.valor_total) }}</td>
+                                    <td>
+                                        <span class="badge {% if compra.status == 'concluída_qr_code' or compra.status == 'concluída_login' %}bg-success{% else %}bg-warning{% endif %}">
+                                            {{ compra.status }}
+                                        </span>
+                                    </td>
+                                    <td>
+                                        <button class="btn btn-sm btn-info" onclick="verDetalhesCompra({{ compra.id }})">
+                                            <i class="fas fa-info-circle"></i> Detalhes
+                                        </button>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Últimas Transações -->
+            <div class="card">
+                <div class="card-body">
+                    <h5 class="card-title">Últimas Transações</h5>
+                    <div class="table-responsive">
+                        <table class="table">
+                            <thead>
+                                <tr>
+                                    <th>Data</th>
+                                    <th>Tipo</th>
+                                    <th>Descrição</th>
+                                    <th>Valor</th>
+                                    <th>Saldo</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for transacao in transacoes %}
+                                <tr>
+                                    <td>{{ transacao.data.strftime('%d/%m/%Y %H:%M') }}</td>
+                                    <td>{{ transacao.tipo }}</td>
+                                    <td>{{ transacao.descricao }}</td>
+                                    <td>R$ {{ "%.2f"|format(transacao.valor) }}</td>
+                                    <td>R$ {{ "%.2f"|format(transacao.saldo_final) }}</td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+<!-- Modal de Detalhes da Compra -->
+<div class="modal fade" id="modalDetalhesCompra" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Detalhes da Compra</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body" id="detalhesCompraContent">
+                <!-- Conteúdo será carregado via AJAX -->
+            </div>
+        </div>
+    </div>
+</div>
+
+{% endblock %}
+
+{% block scripts %}
+<script>
+function verDetalhesCompra(id) {
+    fetch(`/venda/${id}/detalhes`)
+        .then(response => {
+            if (!response.ok) {
+                throw new Error('Erro ao carregar detalhes');
+            }
+            return response.json();
+        })
+        .then(data => {
+            let html = `
+                <table class="table">
+                    <thead>
+                        <tr>
+                            <th>Produto</th>
+                            <th>Quantidade</th>
+                            <th>Preço Unitário</th>
+                            <th>Subtotal</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+            `;
+            
+            data.itens.forEach(item => {
+                html += `
+                    <tr>
+                        <td>${item.produto.nome}</td>
+                        <td>${item.quantidade}</td>
+                        <td>R$ ${item.preco_unitario.toFixed(2)}</td>
+                        <td>R$ ${item.subtotal.toFixed(2)}</td>
+                    </tr>
+                `;
+            });
+            
+            html += `
+                    </tbody>
+                    <tfoot>
+                        <tr>
+                            <td colspan="3" class="text-end"><strong>Total:</strong></td>
+                            <td><strong>R$ ${data.valor_total.toFixed(2)}</strong></td>
+                        </tr>
+                    </tfoot>
+                </table>
+                
+                <div class="mt-3">
+                    <strong>Data:</strong> ${new Date(data.data_venda).toLocaleString()}<br>
+                    <strong>Loja:</strong> ${data.loja.nome}<br>
+                    <strong>Vendedor:</strong> ${data.vendedor.nome}<br>
+                    <strong>Status:</strong> ${data.status}
+                </div>
+            `;
+            
+            document.getElementById('detalhesCompraContent').innerHTML = html;
+            const modal = new bootstrap.Modal(document.getElementById('modalDetalhesCompra'));
+            modal.show();
+        })
+        .catch(error => {
+            console.error('Erro:', error);
+            alert('Erro ao carregar detalhes da compra');
+        });
+}
+
+async function gerarQRCode() {
+    try {
+        const response = await fetch('/cliente/gerar_qr_code');
+        const data = await response.json();
+        
+        if (data.error) {
+            throw new Error(data.error);
+        }
+        
+        const qrCodeDiv = document.getElementById('qr-code');
+        qrCodeDiv.innerHTML = `
+            <img src="${data.qr_code}" class="img-fluid" alt="QR Code">
+            <p class="mt-2 text-muted">Mostre este QR code ao vendedor para finalizar sua compra</p>
+        `;
+        qrCodeDiv.classList.remove('d-none');
+        
+    } catch (error) {
+        console.error('Erro ao gerar QR code:', error);
+        alert('Erro ao gerar QR code: ' + error.message);
+    }
+}
+
+document.getElementById('btn-gerar-qr').addEventListener('click', gerarQRCode);
+</script>
+{% endblock %}
